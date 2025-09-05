@@ -1,4 +1,7 @@
 const { Pool } = require('pg');
+// Ensure environment variables from .env are loaded for any consumer of the pool
+// This prevents tools like utils/migrate.js from missing DB_* vars
+require('dotenv').config();
 
 const pool = new Pool({
   host: process.env.DB_HOST,

@@ -1,0 +1,197 @@
+Okay, I will read every file in the repository and produce a detailed, structured report. I will start by listing all the files to get a complete picture of the codebase.Okay, I've listed the top-level files and directories. Now I'll proceed to list the contents of the `backend` subdirectories.I have a complete list of files. I will now read the contents of all of them to begin the analysis.
+I have now exhaustively read all the files in the repository. I will proceed with generating a comprehensive, file-by-file report as you requested.
+
+### **Codebase Analysis and Report**
+
+Here is a detailed analysis of the "Muayene ve Raporlama Sistemi" (Inspection and Reporting System) codebase.
+
+### 1. Repository Layout
+
+The repository is structured as a monorepo with a distinct separation between the backend and frontend concerns, along with documentation and utility scripts.
+
+```
+/
+├── backend/                 # Node.js API Server
+│   ├── config/              # Database configuration and migrations
+│   ├── controllers/         # Business logic for API endpoints
+│   ├── middleware/          # Express middleware (auth, permissions, uploads)
+│   ├── routes/              # API route definitions
+│   ├── utils/               # Helper functions and utilities (PDF generation, etc.)
+│   └── uploads/             # Directory for user-uploaded files (logos, photos)
+├── scripts/                 # Utility and test scripts
+├── .gitignore               # Specifies files and directories to be ignored by Git
+├── api-documentation.md     # Detailed API endpoint documentation
+├── doc.md                   # High-level project documentation
+├── FRONTEND_DEVELOPMENT_PLAN.md # Planning document for the frontend
+├── frontend.md              # More detailed frontend plan
+├── README.md                # Main project README with setup and overview
+└── signer.md                # Documentation for the e-signature client application
+```
+
+### 2. Project Purpose
+
+Based on the `README.md` and other documentation, this project is a **full-stack, multi-tenant web application designed to digitize the inspection and reporting processes for engineering firms.**
+
+The core business workflow is:
+**Offer -> Work Order -> Inspection -> Report -> E-Signature**
+
+Key functionalities include:
+*   **Multi-tenancy**: Each engineering firm operates in an isolated environment with its own data.
+*   **Dynamic Templates**: Allows creating custom inspection forms for different types of equipment.
+*   **PDF Report Generation**: Automatically generates PDF reports from inspection data.
+*   **E-Signature Integration**: Provides a mechanism for digitally signing reports.
+*   **Permission-Based Access Control**: A granular permission system controls user actions instead of fixed roles.
+*   **QR Code Tracking**: Allows for easy verification and access to reports.
+
+---
+
+### 3. File-by-File Analysis
+
+#### **Root Directory Files**
+
+*   **`/README.md`**: The main entry point for understanding the project. It provides a project summary, feature list, technology stack, quick start guide for both backend and frontend, test user credentials, and deployment considerations. It's a comprehensive guide for a new developer.
+*   **`/.gitignore`**: A standard gitignore file that excludes `node_modules`, environment files (`.env`), log files, build artifacts, and other common temporary files from version control.
+*   **`/api-documentation.md`**: A detailed, structured guide to the backend API. It lists all endpoints, their required HTTP methods, authorization/permission requirements, request body shapes, and example responses. It also documents error codes and rate limiting.
+*   **`/doc.md`**: A high-level project documentation file. It outlines the project's summary, features, data structures, and main modules in Turkish. It serves as a conceptual overview.
+*   **`/FRONTEND_DEVELOPMENT_PLAN.md`**: A detailed plan for the frontend application. It specifies the technology stack (React, Material-UI, Redux Toolkit), project structure, state management architecture, and a phased development roadmap.
+*   **`/frontend.md`**: A complementary document to the frontend plan, detailing UI/UX principles, color palettes for light/dark modes, component standards, and a more granular breakdown of pages and their functionality.
+*   **`/signer.md`**: Contains a JavaScript code snippet for a client-side e-signature application (`esigner`). This code is intended to run on a technician's local machine, listen on `localhost:61812`, and handle the signing of PDF documents.
+*   **`/scripts/a.txt`**: This file contains the JSON output of a successful run of the `test_backend.py` script. It shows the detailed results of each step in the integration test.
+*   **`/scripts/test_backend.py`**: A Python script designed to run a full, end-to-end integration test of the backend API. It covers the entire business workflow: login, creating customers and equipment, creating and approving offers, converting offers to work orders, performing inspections, uploading photos, generating and signing reports. It's an essential tool for verifying the system's integrity.
+
+---
+
+#### **Backend Directory (`/backend`)**
+
+This directory contains the entire Node.js Express application.
+
+*   **`/backend/app.js`**: The main entry point of the backend application.
+    *   **Responsibilities**:
+        *   Initializes the Express app.
+        *   Applies security middleware like `helmet` and `cors`.
+        *   Configures request logging with `morgan`.
+        *   Sets up rate limiting for different parts of the API to prevent abuse.
+        *   Parses incoming JSON and URL-encoded request bodies.
+        *   Imports and mounts all the route handlers from the `/routes` directory.
+        *   Provides a `/api/health` endpoint for health checks.
+        *   Includes a global error handler and a 404 handler for undefined routes.
+        *   Starts the server on the configured port.
+
+*   **`/backend/package.json`**: Defines the project's dependencies, scripts, and metadata.
+    *   **Dependencies**: `express`, `pg` (for PostgreSQL), `jsonwebtoken`, `bcryptjs`, `multer` (for file uploads), `puppeteer` (for PDF generation), `express-validator`, etc.
+    *   **Scripts**:
+        *   `start`: Runs the application.
+        *   `dev`: Runs the application with `nodemon` for automatic restarts during development.
+        *   `migrate`: Executes the database migration script.
+        *   `worker:reports`: Starts the background worker for PDF generation.
+
+*   **`/backend/package-lock.json`**: Locks the specific versions of the dependencies to ensure consistent installations across different environments.
+
+*   **`/backend/API_GUIDE.md`**, **`/backend/API_USAGE_GUIDE.md`**, **`/backend/PROJECT_STRUCTURE.md`**, **`/backend/README.md`**, **`/backend/structureofthisbase.md`**: These are documentation files providing detailed information about the API, project structure, and setup, largely mirroring the content in the root-level documentation.
+
+---
+
+##### **`backend/config/`**
+
+*   **`database.js`**: Configures and exports the PostgreSQL connection pool. It uses the `pg` library and reads database credentials from environment variables. This is crucial for managing database connections efficiently.
+*   **`migrations/`**: Contains SQL files for setting up and evolving the database schema.
+    *   **`001_create_tables.sql`**: The initial schema definition. It creates all tables (`companies`, `technicians`, `customers`, `equipment`, `offers`, `work_orders`, `inspections`, `reports`), defines their columns, sets up foreign key relationships, and creates indexes for performance.
+    *   **`002_seed_data.sql`**: Populates the database with initial data for development and testing, including a super admin, a company admin, a technician, and sample equipment.
+    *   **`003_add_offer_customer_decision.sql`**: An incremental migration that adds fields to the `offers` table to track the customer's decision.
+    *   **`004_create_report_jobs.sql`**: Adds a `report_jobs` table to manage asynchronous PDF generation.
+    *   **`005_reports_file_paths.sql`**: Adds columns to the `reports` table to store file paths for generated PDFs, moving away from storing base64 content directly in the database.
+    *   **`006_drop_base64_columns.sql`**: Removes the old base64 columns from the `reports` table, completing the migration to a file-based storage system for PDFs.
+
+---
+
+##### **`backend/controllers/`**
+
+This directory holds the core business logic of the application. Each file corresponds to a specific resource (e.g., `authController.js` for authentication).
+
+*   **`authController.js`**: Handles user login, logout, profile retrieval, and permission checks. The `login` function validates credentials, and upon success, generates a JWT.
+*   **`companyController.js`**: Manages CRUD operations for `companies`. Super admins can manage all companies, while company admins can only manage their own.
+*   **`customerCompanyController.js`**: Manages CRUD operations for `customer_companies`, ensuring that data is properly scoped to the logged-in user's company.
+*   **`equipmentController.js`**: Manages CRUD operations for `equipment` and their dynamic JSON `template`s. Includes validation for the template structure.
+*   **`inspectionController.js`**: A complex controller that manages the entire inspection lifecycle. It handles creating, updating, and retrieving inspections, validating time slots to prevent conflicts, and processing inspection data against the equipment templates.
+*   **`offerController.js`**: Manages the offer workflow, including creation, approval, sending to customers (with a tracking token), and conversion into a work order.
+*   **`reportController.js`**: Handles everything related to reports. It generates PDFs from HTML, manages e-signatures, and provides endpoints for downloading and viewing reports. It uses `puppeteer` for reliable PDF generation.
+*   **`technicianController.js`**: Manages CRUD operations for `technicians`, including updating their specific permissions.
+*   **`uploadController.js`**: Handles file uploads for company logos and inspection photos, saving them to the filesystem and storing the paths in the database.
+*   **`workOrderController.js`**: Manages the creation and status updates of `work_orders`. It also handles the assignment of technicians to work orders.
+
+---
+
+##### **`backend/middleware/`**
+
+*   **`auth.js`**: A critical piece of middleware that protects routes. It verifies the JWT from the `Authorization` header and attaches the authenticated user's data to the `req` object.
+*   **`permissions.js`**: Works with `auth.js` to provide granular access control. It exports middleware factories (`requirePermission`, `requireAnyPermission`) that check if the authenticated user has the necessary permissions to perform an action.
+*   **`upload.js`**: Configures `multer` for handling multipart/form-data requests (file uploads). It defines storage destinations, filenames, file filters (e.g., for images), and size limits.
+
+---
+
+##### **`backend/routes/`**
+
+This directory defines the API endpoints. Each file maps HTTP routes to the corresponding controller functions and applies the necessary middleware.
+
+*   **`auth.js`**: Routes for `/api/auth/login`, `/api/auth/logout`, etc.
+*   **`companies.js`**: Routes for managing companies.
+*   **`customerCompanies.js`**: Routes for managing customer companies.
+*   **`equipment.js`**: Routes for managing equipment and templates.
+*   **`inspections.js`**: Routes for managing inspections.
+*   **`offers.js`**: Routes for managing offers.
+*   **`reports.js`**: Routes for managing reports.
+*   **`technicians.js`**: Routes for managing technicians.
+*   **`uploads.js`**: Routes for handling file uploads and serving uploaded files.
+*   **`workOrders.js`**: Routes for managing work orders.
+
+---
+
+##### **`backend/utils/`**
+
+*   **`migrate.js`**: A script to run the database migrations located in `config/migrations/`.
+*   **`pdfGenerator.js`**: A utility that uses `puppeteer` to convert HTML content into a PDF buffer. This is a more robust alternative to the older `html-pdf` library.
+*   **`reportRenderer.js`**: Contains the logic to render inspection data into a structured HTML document using a predefined template. This HTML is then passed to the `pdfGenerator`.
+*   **`reportWorker.js`**: A background worker script designed to process PDF generation jobs asynchronously from the `report_jobs` table. This prevents long-running PDF generation tasks from blocking the main API event loop.
+*   **`storage.js`**: A utility module for managing file storage for reports. It provides functions to get file paths, ensure directories exist, and write files atomically to prevent data corruption.
+
+---
+
+### 4. Architectural Synthesis
+
+*   **Architecture**: The backend follows a classic **Model-View-Controller (MVC)** pattern, although the "View" is the JSON response sent to the client. It's a monolithic API server.
+*   **Data Models & DB Schema**: The database schema is well-defined in `001_create_tables.sql`. It uses foreign keys to enforce relational integrity. A key feature is the use of the `JSONB` data type in PostgreSQL for storing the dynamic `template` in the `equipment` table and the `inspection_data` in the `inspections` table. This provides great flexibility.
+*   **Authentication & Authorization**: Security is handled robustly. **Authentication** is done via JWTs. **Authorization** is managed by a fine-grained, permission-based system defined in `middleware/permissions.js`, which is more flexible than a role-based system.
+*   **Middleware**: The application makes effective use of Express middleware for security (`helmet`), CORS, rate limiting, authentication (`auth.js`), authorization (`permissions.js`), and file uploads (`upload.js`).
+*   **Error Handling**: There is a global error handler in `app.js`, and controllers use `try...catch` blocks to handle errors gracefully, returning structured JSON error messages.
+*   **Configuration**: Configuration is managed via environment variables (`.env` file), which is a best practice.
+*   **PDF Generation**: The system has evolved from a simple `html-pdf` implementation to a more robust one using `puppeteer` and a background worker (`reportWorker.js`). This is a significant performance and reliability improvement, as it offloads the heavy task of PDF generation from the main request-response cycle.
+*   **File Storage**: The system has migrated from storing PDFs as base64 strings in the database to storing them on the file system and referencing the path in the database. This is a much more scalable and performant approach.
+*   **Testing**: The presence of `scripts/test_backend.py` indicates a strong emphasis on integration testing, which is excellent for ensuring the reliability of the entire API workflow.
+
+---
+
+### 5. How to Run the Project
+
+Based on the `README.md` and `package.json`:
+
+**1. Prerequisites:**
+*   Node.js (>= 18.0.0)
+*   PostgreSQL (>= 13.0)
+*   npm (>= 8.0.0)
+
+**2. Backend Setup:**
+1.  Navigate to the `backend` directory: `cd backend`
+2.  Install dependencies: `npm install`
+3.  Create a PostgreSQL database (e.g., `muayene_db`).
+4.  Create a `.env` file by copying `.env.example` (if it exists) or creating it from scratch with the necessary database credentials and a `JWT_SECRET`.
+5.  Run the database migrations: `npm run migrate`
+6.  Start the development server: `npm run dev`
+
+The backend API will be running on `http://localhost:3000/api`.
+
+**3. Running Tests:**
+1.  Navigate to the `scripts` directory.
+2.  Ensure you have Python 3 and the `requests` library installed (`pip install requests`).
+3.  Run the test script: `python test_backend.py`
+
+This will execute a comprehensive suite of tests against the running backend and output the results to the console and `a.txt`.

@@ -83,7 +83,7 @@ const uploadInspectionPhotos = async (req, res) => {
     
     // Verify inspection exists and belongs to the company
     const inspectionCheck = await pool.query(
-      `SELECT i.id, i.photo_urls, wo.company_id
+      `SELECT i.id, i.photo_urls, i.inspection_data, wo.company_id
        FROM inspections i
        JOIN work_orders wo ON i.work_order_id = wo.id
        WHERE i.id = $1`,
@@ -137,10 +137,26 @@ const uploadInspectionPhotos = async (req, res) => {
     const existingPhotos = inspection.photo_urls || [];
     const allPhotos = [...existingPhotos, ...newPhotoUrls];
     
-    // Update inspection with new photo URLs
+    // Optionally map uploaded photos to a specific template field
+    let updatedInspectionData = inspection.inspection_data || {};
+    const bodyFieldName = req.body?.fieldName || req.body?.fieldNames;
+    if (bodyFieldName) {
+      const fieldNames = Array.isArray(bodyFieldName) ? bodyFieldName : newPhotoUrls.map(() => bodyFieldName);
+      fieldNames.forEach((fname, idx) => {
+        if (typeof fname === 'string' && fname.trim()) {
+          const url = newPhotoUrls[idx] || newPhotoUrls[newPhotoUrls.length - 1];
+          if (!Array.isArray(updatedInspectionData[fname])) {
+            updatedInspectionData[fname] = [];
+          }
+          updatedInspectionData[fname].push(url);
+        }
+      });
+    }
+
+    // Update inspection with new photo URLs and optional mapping
     const result = await pool.query(
-      'UPDATE inspections SET photo_urls = $1 WHERE id = $2 RETURNING photo_urls',
-      [JSON.stringify(allPhotos), inspectionId]
+      'UPDATE inspections SET photo_urls = $1, inspection_data = $2 WHERE id = $3 RETURNING photo_urls',
+      [JSON.stringify(allPhotos), JSON.stringify(updatedInspectionData), inspectionId]
     );
     
     const uploadedFiles = req.files.map(file => ({

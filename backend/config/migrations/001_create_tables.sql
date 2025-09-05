@@ -119,8 +119,6 @@ CREATE TABLE inspections (
 CREATE TABLE reports (
     id SERIAL PRIMARY KEY,
     inspection_id INTEGER NOT NULL REFERENCES inspections(id) ON DELETE CASCADE,
-    unsigned_pdf_base64 TEXT,
-    signed_pdf_base64 TEXT,
     is_signed BOOLEAN DEFAULT false,
     signed_at TIMESTAMP,
     signed_by INTEGER REFERENCES technicians(id),

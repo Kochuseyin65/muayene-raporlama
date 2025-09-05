@@ -452,7 +452,7 @@ const sendOffer = async (req, res) => {
     
     // Here you would integrate with email service
     // For now, we'll just return success with tracking URL
-    const trackingUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/track-offer/${offer.tracking_token}`;
+    const trackingUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/track/${offer.tracking_token}`;
     
     res.json({
       success: true,
@@ -531,6 +531,84 @@ const trackOffer = async (req, res) => {
   }
 };
 
+// Public customer acceptance of offer via tracking token
+const acceptOfferByCustomer = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { note } = req.body || {};
+
+    // Idempotent approval when in allowed states
+    const update = await pool.query(
+      `UPDATE offers
+       SET status = 'approved',
+           customer_decision = 'accepted',
+           customer_decision_note = COALESCE($2, customer_decision_note),
+           customer_decision_at = COALESCE(customer_decision_at, CURRENT_TIMESTAMP),
+           viewed_at = COALESCE(viewed_at, CURRENT_TIMESTAMP),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE tracking_token = $1 AND status IN ('pending','sent','viewed')
+       RETURNING *`,
+      [token, note || null]
+    );
+
+    if (update.rows.length > 0) {
+      return res.json({ success: true, message: 'Teklif müşteri tarafından onaylandı', data: update.rows[0] });
+    }
+
+    // If not updated, fetch current to decide response
+    const check = await pool.query('SELECT status, customer_decision FROM offers WHERE tracking_token = $1', [token]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Teklif bulunamadı' } });
+    }
+    const row = check.rows[0];
+    if (row.customer_decision === 'accepted' || row.status === 'approved') {
+      return res.json({ success: true, message: 'Teklif daha önce onaylanmış', data: row });
+    }
+    return res.status(409).json({ success: false, error: { code: 'CONFLICT', message: 'Bu teklif bu aşamada onaylanamaz' } });
+  } catch (error) {
+    console.error('Accept offer (public) error:', error);
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Teklif onaylanırken bir hata oluştu' } });
+  }
+};
+
+// Public customer decline of offer via tracking token
+const declineOfferByCustomer = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { note } = req.body || {};
+
+    const update = await pool.query(
+      `UPDATE offers
+       SET status = 'rejected',
+           customer_decision = 'rejected',
+           customer_decision_note = COALESCE($2, customer_decision_note),
+           customer_decision_at = COALESCE(customer_decision_at, CURRENT_TIMESTAMP),
+           viewed_at = COALESCE(viewed_at, CURRENT_TIMESTAMP),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE tracking_token = $1 AND status IN ('pending','sent','viewed')
+       RETURNING *`,
+      [token, note || null]
+    );
+
+    if (update.rows.length > 0) {
+      return res.json({ success: true, message: 'Teklif müşteri tarafından reddedildi', data: update.rows[0] });
+    }
+
+    const check = await pool.query('SELECT status, customer_decision FROM offers WHERE tracking_token = $1', [token]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Teklif bulunamadı' } });
+    }
+    const row = check.rows[0];
+    if (row.customer_decision === 'rejected' || row.status === 'rejected') {
+      return res.json({ success: true, message: 'Teklif daha önce reddedilmiş', data: row });
+    }
+    return res.status(409).json({ success: false, error: { code: 'CONFLICT', message: 'Bu teklif bu aşamada reddedilemez' } });
+  } catch (error) {
+    console.error('Decline offer (public) error:', error);
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Teklif reddedilirken bir hata oluştu' } });
+  }
+};
+
 const convertToWorkOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -584,10 +662,32 @@ const convertToWorkOrder = async (req, res) => {
       
       const workOrder = workOrderResult.rows[0];
       
+      // Helper: find a free day for the given technician to avoid unique_time_slot collisions
+      async function findFreeDate(techId, preferredDate) {
+        const start = '09:00';
+        const end = '17:00';
+        let d = preferredDate ? new Date(preferredDate) : new Date();
+        for (let i = 0; i < 120; i++) { // search up to 120 days ahead
+          const dateStr = d.toISOString().slice(0, 10);
+          const clash = await client.query(
+            `SELECT 1 FROM inspections 
+             WHERE technician_id = $1 AND inspection_date = $2 
+               AND start_time = $3 AND end_time = $4 
+             LIMIT 1`,
+            [techId, dateStr, start, end]
+          );
+          if (clash.rows.length === 0) return dateStr;
+          d.setDate(d.getDate() + 1);
+        }
+        // fallback: today if no slot found in 120 days
+        return new Date().toISOString().slice(0, 10);
+      }
+
       // Create inspections for each equipment in the offer
       const items = offer.items;
       for (const item of items) {
         for (let i = 0; i < item.quantity; i++) {
+          const freeDate = await findFreeDate(createdBy, scheduledDate);
           await client.query(
             `INSERT INTO inspections (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data) 
              VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -595,7 +695,7 @@ const convertToWorkOrder = async (req, res) => {
               workOrder.id, 
               item.equipmentId, 
               createdBy, // Temporary assignment, can be changed later
-              scheduledDate || new Date(),
+              freeDate,
               '09:00', // Default start time
               '17:00', // Default end time
               JSON.stringify({}) // Empty inspection data initially
@@ -764,6 +864,8 @@ module.exports = {
   approveOffer,
   sendOffer,
   trackOffer,
+  acceptOfferByCustomer,
+  declineOfferByCustomer,
   convertToWorkOrder,
   deleteOffer,
   createOfferValidation,

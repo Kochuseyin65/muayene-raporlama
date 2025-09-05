@@ -16,6 +16,14 @@ router.get('/track/:token',
   offerController.trackOffer
 );
 
+// Public offer acceptance/decline by customer
+router.post('/track/:token/accept', 
+  offerController.acceptOfferByCustomer
+);
+router.post('/track/:token/decline', 
+  offerController.declineOfferByCustomer
+);
+
 // GET /api/offers/:id - Get offer by ID
 router.get('/:id', 
   authMiddleware, 

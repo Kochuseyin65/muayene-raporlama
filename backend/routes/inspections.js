@@ -3,6 +3,7 @@ const router = express.Router();
 const inspectionController = require('../controllers/inspectionController');
 const authMiddleware = require('../middleware/auth');
 const { requirePermission, requireAnyPermission } = require('../middleware/permissions');
+const { uploadInspectionPhotos: uploadPhotosMulter, handleUploadError } = require('../middleware/upload');
 
 // GET /api/inspections - Get all inspections
 router.get('/', 
@@ -55,10 +56,19 @@ router.post('/:id/complete',
   inspectionController.completeInspection
 );
 
+// POST /api/inspections/:id/approve - Approve inspection (company admin)
+router.post('/:id/approve',
+  authMiddleware,
+  requirePermission('companyAdmin'),
+  inspectionController.approveInspection
+);
+
 // POST /api/inspections/:id/photos - Upload inspection photos
 router.post('/:id/photos', 
   authMiddleware, 
   requirePermission('uploadPhotos'), 
+  uploadPhotosMulter,
+  handleUploadError,
   inspectionController.uploadInspectionPhotos
 );
 

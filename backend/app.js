@@ -32,9 +32,10 @@ const generalLimiter = rateLimit({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use('/api/auth', authLimiter);
-app.use('/api/uploads', uploadLimiter);
-app.use('/api', generalLimiter);
+// Rate limiting temporarily disabled for development
+// app.use('/api/auth', authLimiter);
+// app.use('/api/uploads', uploadLimiter);  
+// app.use('/api', generalLimiter);
 
 // Routes
 const authRoutes = require('./routes/auth');

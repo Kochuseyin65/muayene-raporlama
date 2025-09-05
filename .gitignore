@@ -50,12 +50,8 @@ yarn-error.log
 ehthumbs.db
 Thumbs.db
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Environment variables (allow committing .env as requested)
+# (Intentionally not ignoring .env and variants)
 
 # Build outputs
 dist/
@@ -72,12 +68,11 @@ temp/
 *.sqlite3
 *.db
 
-# Uploaded files (should be stored in cloud in production)
+# Uploaded files (do not commit runtime uploads)
 uploads/
 !uploads/.gitkeep
 
-# PDF files (generated reports)
-*.pdf
+# PDF files: commit allowed
 
 # Backup files
 *.backup

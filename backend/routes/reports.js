@@ -23,6 +23,27 @@ router.get('/:id/download',
   reportController.downloadReport
 );
 
+// POST /api/reports/:id/prepare - Generate unsigned PDF for signing/download
+router.post('/:id/prepare', 
+  authMiddleware,
+  requirePermission('viewReports'),
+  reportController.prepareReportPdf
+);
+
+// POST /api/reports/:id/prepare-async - Enqueue background PDF generation
+router.post('/:id/prepare-async',
+  authMiddleware,
+  requirePermission('viewReports'),
+  reportController.enqueueReportPrepare
+);
+
+// GET /api/reports/jobs/:jobId - Check job status
+router.get('/jobs/:jobId',
+  authMiddleware,
+  requirePermission('viewReports'),
+  reportController.getReportJobStatus
+);
+
 // GET /api/reports/:id/signing-data - Get signing data for e-signature
 router.get('/:id/signing-data', 
   authMiddleware, 

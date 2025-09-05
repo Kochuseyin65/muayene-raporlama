@@ -1,0 +1,1810 @@
+--- backend/controllers/authController.js
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const generateToken = (user) => {
+  return jwt.sign(
+    { 
+      id: user.id, 
+      email: user.email, 
+      companyId: user.company_id 
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+};
+
+const login = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { email, password } = req.body;
+    
+    const result = await pool.query(
+      `SELECT t.*, c.name as company_name 
+       FROM technicians t 
+       JOIN companies c ON t.company_id = c.id 
+       WHERE t.email = $1 AND t.is_active = true`,
+      [email.toLowerCase()]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Geçersiz e-posta veya şifre'
+        }
+      });
+    }
+    
+    const user = result.rows[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Geçersiz e-posta veya şifre'
+        }
+      });
+    }
+    
+    const token = generateToken(user);
+    
+    // Remove sensitive data
+    delete user.password_hash;
+    delete user.e_signature_pin;
+    
+    res.json({
+      success: true,
+      data: {
+        token,
+        user
+      }
+    });
+    
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Giriş yapılırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const checkPermission = async (req, res) => {
+  try {
+    const { permission } = req.params;
+    const userPermissions = req.user.permissions || [];
+    
+    // Süper admin her şeye erişebilir
+    if (userPermissions.includes('superAdmin')) {
+      return res.json({
+        success: true,
+        data: { hasPermission: true }
+      });
+    }
+    
+    const hasPermission = userPermissions.includes(permission);
+    
+    res.json({
+      success: true,
+      data: { hasPermission }
+    });
+    
+  } catch (error) {
+    console.error('Permission check error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Yetki kontrolü yapılırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    // Token'i client tarafında silmek yeterli olacak
+    // İsteğe bağlı olarak burada token blacklist mantığı eklenebilir
+    
+    res.json({
+      success: true,
+      message: 'Başarıyla çıkış yapıldı'
+    });
+    
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Çıkış yapılırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getProfile = async (req, res) => {
+  try {
+    const user = { ...req.user };
+    
+    // Remove sensitive data
+    delete user.password_hash;
+    delete user.e_signature_pin;
+    
+    res.json({
+      success: true,
+      data: { user }
+    });
+    
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Profil bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const loginValidation = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Geçerli bir e-posta adresi giriniz'),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Şifre en az 6 karakter olmalıdır')
+];
+
+module.exports = {
+--- backend/controllers/companyController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const getAllCompanies = async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, tax_number, address, contact, logo_url, created_at, updated_at FROM companies ORDER BY created_at DESC'
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+    
+  } catch (error) {
+    console.error('Get companies error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Firmalar listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await pool.query(
+      'SELECT id, name, tax_number, address, contact, logo_url, created_at, updated_at FROM companies WHERE id = $1',
+      [id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Firma bulunamadı'
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Get company error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Firma bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const createCompany = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { name, taxNumber, address, contact, logoUrl } = req.body;
+    
+    // Check if tax number already exists
+    const existingCompany = await pool.query(
+      'SELECT id FROM companies WHERE tax_number = $1',
+      [taxNumber]
+    );
+    
+    if (existingCompany.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'Bu vergi numarası ile kayıtlı firma zaten mevcut'
+        }
+      });
+    }
+    
+    const result = await pool.query(
+      'INSERT INTO companies (name, tax_number, address, contact, logo_url) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, tax_number, address, contact, logo_url, created_at, updated_at',
+      [name, taxNumber, address, contact, logoUrl || null]
+    );
+    
+    res.status(201).json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Create company error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Firma oluşturulurken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const updateCompany = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { id } = req.params;
+    const { name, taxNumber, address, contact, logoUrl } = req.body;
+    
+    // Super admin can update any company, company admin can only update their own company
+    let companyIdToUpdate = id;
+    if (!req.user.permissions.includes('superAdmin')) {
+      if (parseInt(id) !== req.user.company_id) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'PERMISSION_DENIED',
+            message: 'Sadece kendi firmanızı güncelleyebilirsiniz'
+          }
+        });
+      }
+    }
+    
+    // Check if company exists
+    const existingCompany = await pool.query(
+      'SELECT id FROM companies WHERE id = $1',
+      [companyIdToUpdate]
+    );
+    
+    if (existingCompany.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Firma bulunamadı'
+        }
+      });
+    }
+    
+    // Check if tax number conflicts with another company
+    const taxConflict = await pool.query(
+      'SELECT id FROM companies WHERE tax_number = $1 AND id != $2',
+      [taxNumber, companyIdToUpdate]
+    );
+    
+    if (taxConflict.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'Bu vergi numarası ile başka bir firma zaten kayıtlı'
+        }
+      });
+    }
+    
+    const result = await pool.query(
+--- backend/controllers/customerCompanyController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const getCustomerCompanies = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const { page = 1, limit = 50, search } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT id, name, tax_number, address, contact, email, authorized_person, created_at, updated_at 
+      FROM customer_companies 
+      WHERE company_id = $1
+    `;
+    let params = [companyId];
+    
+    if (search) {
+      query += ` AND (name ILIKE $2 OR tax_number ILIKE $2 OR email ILIKE $2)`;
+      params.push(`%${search}%`);
+    }
+    
+    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = 'SELECT COUNT(*) FROM customer_companies WHERE company_id = $1';
+    let countParams = [companyId];
+    
+    if (search) {
+      countQuery += ` AND (name ILIKE $2 OR tax_number ILIKE $2 OR email ILIKE $2)`;
+      countParams.push(`%${search}%`);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.json({
+      success: true,
+      data: {
+        customers: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: (page * limit) < totalCount,
+          hasPrev: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get customer companies error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Müşteri firmalar listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getCustomerCompany = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT id, name, tax_number, address, contact, email, authorized_person, created_at, updated_at 
+       FROM customer_companies 
+       WHERE id = $1 AND company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Müşteri firma bulunamadı'
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Get customer company error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Müşteri firma bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const createCustomerCompany = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { name, taxNumber, address, contact, email, authorizedPerson } = req.body;
+    const companyId = req.user.company_id;
+    
+    // Check if tax number already exists for this company
+    if (taxNumber) {
+      const existingCustomer = await pool.query(
+        'SELECT id FROM customer_companies WHERE tax_number = $1 AND company_id = $2',
+        [taxNumber, companyId]
+      );
+      
+      if (existingCustomer.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'CONFLICT',
+            message: 'Bu vergi numarası ile kayıtlı müşteri firma zaten mevcut'
+          }
+        });
+      }
+    }
+    
+    // Check if email already exists for this company
+    const existingEmail = await pool.query(
+      'SELECT id FROM customer_companies WHERE email = $1 AND company_id = $2',
+      [email.toLowerCase(), companyId]
+    );
+    
+    if (existingEmail.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'Bu e-posta adresi ile kayıtlı müşteri firma zaten mevcut'
+        }
+      });
+    }
+    
+    const result = await pool.query(
+      `INSERT INTO customer_companies (company_id, name, tax_number, address, contact, email, authorized_person) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING id, name, tax_number, address, contact, email, authorized_person, created_at, updated_at`,
+      [companyId, name, taxNumber || null, address || null, contact || null, email.toLowerCase(), authorizedPerson || null]
+    );
+    
+    res.status(201).json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Create customer company error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Müşteri firma oluşturulurken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const updateCustomerCompany = async (req, res) => {
+--- backend/controllers/equipmentController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const getEquipment = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const { page = 1, limit = 50, search, type } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT id, name, type, template, is_active, created_at, updated_at 
+      FROM equipment 
+      WHERE company_id = $1 AND is_active = true
+    `;
+    let params = [companyId];
+    
+    if (search) {
+      query += ` AND (name ILIKE $${params.length + 1} OR type ILIKE $${params.length + 1})`;
+      params.push(`%${search}%`);
+    }
+    
+    if (type) {
+      query += ` AND type = $${params.length + 1}`;
+      params.push(type);
+    }
+    
+    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = 'SELECT COUNT(*) FROM equipment WHERE company_id = $1 AND is_active = true';
+    let countParams = [companyId];
+    
+    if (search) {
+      countQuery += ` AND (name ILIKE $${countParams.length + 1} OR type ILIKE $${countParams.length + 1})`;
+      countParams.push(`%${search}%`);
+    }
+    
+    if (type) {
+      countQuery += ` AND type = $${countParams.length + 1}`;
+      countParams.push(type);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.json({
+      success: true,
+      data: {
+        equipment: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: (page * limit) < totalCount,
+          hasPrev: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get equipment error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ekipmanlar listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getEquipmentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT id, name, type, template, is_active, created_at, updated_at 
+       FROM equipment 
+       WHERE id = $1 AND company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Ekipman bulunamadı'
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Get equipment by id error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ekipman bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getEquipmentTypes = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT DISTINCT type 
+       FROM equipment 
+       WHERE company_id = $1 AND is_active = true 
+       ORDER BY type`,
+      [companyId]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows.map(row => row.type)
+    });
+    
+  } catch (error) {
+    console.error('Get equipment types error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Ekipman türleri listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const createEquipment = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { name, type, template } = req.body;
+    const companyId = req.user.company_id;
+    
+    // Check if equipment name already exists for this company and type
+    const existingEquipment = await pool.query(
+      'SELECT id FROM equipment WHERE name = $1 AND type = $2 AND company_id = $3',
+      [name, type, companyId]
+    );
+    
+    if (existingEquipment.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'Bu isim ve türde ekipman zaten mevcut'
+        }
+      });
+    }
+    
+    // Validate template structure
+    if (!validateTemplate(template)) {
+      return res.status(400).json({
+        success: false,
+--- backend/controllers/inspectionController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const getInspections = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const { 
+      page = 1, 
+      limit = 20, 
+      workOrderId, 
+      technicianId, 
+      status, 
+      dateFrom, 
+      dateTo,
+      equipmentType 
+    } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT i.*, e.name as equipment_name, e.type as equipment_type,
+             t.name as technician_name, t.surname as technician_surname,
+             wo.work_order_number, cc.name as customer_name,
+             r.id as report_id, r.is_signed, r.qr_token
+      FROM inspections i
+      JOIN equipment e ON i.equipment_id = e.id
+      JOIN technicians t ON i.technician_id = t.id
+      JOIN work_orders wo ON i.work_order_id = wo.id
+      JOIN customer_companies cc ON wo.customer_company_id = cc.id
+      LEFT JOIN reports r ON i.id = r.inspection_id
+      WHERE wo.company_id = $1
+    `;
+    let params = [companyId];
+    
+    if (workOrderId) {
+      query += ` AND i.work_order_id = $${params.length + 1}`;
+      params.push(workOrderId);
+    }
+    
+    if (technicianId) {
+      query += ` AND i.technician_id = $${params.length + 1}`;
+      params.push(technicianId);
+    }
+    
+    if (status) {
+      query += ` AND i.status = $${params.length + 1}`;
+      params.push(status);
+    }
+    
+    if (equipmentType) {
+      query += ` AND e.type = $${params.length + 1}`;
+      params.push(equipmentType);
+    }
+    
+    if (dateFrom) {
+      query += ` AND i.inspection_date >= $${params.length + 1}`;
+      params.push(dateFrom);
+    }
+    
+    if (dateTo) {
+      query += ` AND i.inspection_date <= $${params.length + 1}`;
+      params.push(dateTo);
+    }
+    
+    query += ` ORDER BY i.inspection_date DESC, i.start_time DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = `
+      SELECT COUNT(*) 
+      FROM inspections i
+      JOIN equipment e ON i.equipment_id = e.id
+      JOIN work_orders wo ON i.work_order_id = wo.id
+      WHERE wo.company_id = $1
+    `;
+    let countParams = [companyId];
+    
+    // Apply same filters for count
+    if (workOrderId) {
+      countQuery += ` AND i.work_order_id = $${countParams.length + 1}`;
+      countParams.push(workOrderId);
+    }
+    
+    if (technicianId) {
+      countQuery += ` AND i.technician_id = $${countParams.length + 1}`;
+      countParams.push(technicianId);
+    }
+    
+    if (status) {
+      countQuery += ` AND i.status = $${countParams.length + 1}`;
+      countParams.push(status);
+    }
+    
+    if (equipmentType) {
+      countQuery += ` AND e.type = $${countParams.length + 1}`;
+      countParams.push(equipmentType);
+    }
+    
+    if (dateFrom) {
+      countQuery += ` AND i.inspection_date >= $${countParams.length + 1}`;
+      countParams.push(dateFrom);
+    }
+    
+    if (dateTo) {
+      countQuery += ` AND i.inspection_date <= $${countParams.length + 1}`;
+      countParams.push(dateTo);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.json({
+      success: true,
+      data: {
+        inspections: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: (page * limit) < totalCount,
+          hasPrev: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get inspections error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Muayeneler listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const approveInspection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+
+    const inspectionCheck = await pool.query(
+      `SELECT i.*, wo.company_id
+       FROM inspections i
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       WHERE i.id = $1`,
+      [id]
+    );
+
+    if (inspectionCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Muayene bulunamadı' } });
+    }
+    const inspection = inspectionCheck.rows[0];
+    if (inspection.company_id !== companyId) {
+      return res.status(403).json({ success: false, error: { code: 'PERMISSION_DENIED', message: 'Bu muayeneye erişim yetkiniz yok' } });
+    }
+    if (inspection.status !== 'completed') {
+      return res.status(409).json({ success: false, error: { code: 'CONFLICT', message: 'Sadece tamamlanmış muayeneler onaylanabilir' } });
+    }
+
+    const result = await pool.query(
+      `UPDATE inspections SET status = 'approved' WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    return res.json({ success: true, data: result.rows[0], message: 'Muayene onaylandı' });
+  } catch (error) {
+    console.error('Approve inspection error:', error);
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Muayene onaylanırken bir hata oluştu' } });
+  }
+};
+
+const getInspection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+--- backend/controllers/offerController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+const crypto = require('crypto');
+
+const generateOfferNumber = () => {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `OFFER-${timestamp}${random}`;
+};
+
+const generateTrackingToken = () => {
+  return crypto.randomBytes(32).toString('hex');
+};
+
+const getOffers = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const { page = 1, limit = 20, status, search, customerCompanyId } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT o.*, cc.name as customer_name, cc.email as customer_email,
+             t1.name as created_by_name, t1.surname as created_by_surname,
+             t2.name as approved_by_name, t2.surname as approved_by_surname
+      FROM offers o
+      JOIN customer_companies cc ON o.customer_company_id = cc.id
+      JOIN technicians t1 ON o.created_by = t1.id
+      LEFT JOIN technicians t2 ON o.approved_by = t2.id
+      WHERE o.company_id = $1
+    `;
+    let params = [companyId];
+    
+    if (status) {
+      query += ` AND o.status = $${params.length + 1}`;
+      params.push(status);
+    }
+    
+    if (search) {
+      query += ` AND (o.offer_number ILIKE $${params.length + 1} OR cc.name ILIKE $${params.length + 1})`;
+      params.push(`%${search}%`);
+    }
+    
+    if (customerCompanyId) {
+      query += ` AND o.customer_company_id = $${params.length + 1}`;
+      params.push(customerCompanyId);
+    }
+    
+    query += ` ORDER BY o.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = `
+      SELECT COUNT(*) 
+      FROM offers o 
+      JOIN customer_companies cc ON o.customer_company_id = cc.id 
+      WHERE o.company_id = $1
+    `;
+    let countParams = [companyId];
+    
+    if (status) {
+      countQuery += ` AND o.status = $${countParams.length + 1}`;
+      countParams.push(status);
+    }
+    
+    if (search) {
+      countQuery += ` AND (o.offer_number ILIKE $${countParams.length + 1} OR cc.name ILIKE $${countParams.length + 1})`;
+      countParams.push(`%${search}%`);
+    }
+    
+    if (customerCompanyId) {
+      countQuery += ` AND o.customer_company_id = $${countParams.length + 1}`;
+      countParams.push(customerCompanyId);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.json({
+      success: true,
+      data: {
+        offers: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: (page * limit) < totalCount,
+          hasPrev: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get offers error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Teklifler listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getOffer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT o.*, cc.name as customer_name, cc.email as customer_email,
+              cc.tax_number as customer_tax_number, cc.address as customer_address,
+              cc.contact as customer_contact, cc.authorized_person as customer_authorized_person,
+              t1.name as created_by_name, t1.surname as created_by_surname,
+              t2.name as approved_by_name, t2.surname as approved_by_surname
+       FROM offers o
+       JOIN customer_companies cc ON o.customer_company_id = cc.id
+       JOIN technicians t1 ON o.created_by = t1.id
+       LEFT JOIN technicians t2 ON o.approved_by = t2.id
+       WHERE o.id = $1 AND o.company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Teklif bulunamadı'
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Get offer error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Teklif bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const createOffer = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { customerCompanyId, items, notes } = req.body;
+    const companyId = req.user.company_id;
+    const createdBy = req.user.id;
+    
+    // Verify customer company belongs to the same company
+    const customerCheck = await pool.query(
+      'SELECT id FROM customer_companies WHERE id = $1 AND company_id = $2',
+      [customerCompanyId, companyId]
+    );
+    
+    if (customerCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+--- backend/controllers/reportController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+const crypto = require('crypto');
+const { generatePDFFromHTML: generatePDFFromHTMLPuppeteer } = require('../utils/pdfGenerator');
+const path = require('path');
+const {
+  unsignedPdfPath,
+  signedPdfPath,
+  writeFileAtomic,
+  fileExists,
+  readFileBase64,
+} = require('../utils/storage');
+
+// Helper: detect and normalize legacy CSV byte string to base64
+function normalizeToBase64(possible) {
+  try {
+    if (typeof possible !== 'string' || possible.length === 0) return possible;
+    const csvPattern = /^\s*\d+(?:\s*,\s*\d+)*\s*$/;
+    if (csvPattern.test(possible)) {
+      const bytes = possible
+        .split(',')
+        .map(s => parseInt(s.trim(), 10))
+        .filter(n => Number.isInteger(n) && n >= 0 && n <= 255);
+      const buf = Buffer.from(Uint8Array.from(bytes));
+      return buf.toString('base64');
+    }
+    return possible;
+  } catch (_) {
+    return possible;
+  }
+}
+
+const getReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
+              e.name as equipment_name, e.type as equipment_type, e.template,
+              t.name as technician_name, t.surname as technician_surname,
+              wo.work_order_number, cc.name as customer_name,
+              comp.name as company_name, comp.logo_url
+       FROM reports r
+       JOIN inspections i ON r.inspection_id = i.id
+       JOIN equipment e ON i.equipment_id = e.id
+       JOIN technicians t ON i.technician_id = t.id
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       JOIN customer_companies cc ON wo.customer_company_id = cc.id
+       JOIN companies comp ON wo.company_id = comp.id
+       WHERE r.id = $1 AND wo.company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Rapor bulunamadı'
+        }
+      });
+    }
+    
+    const row = result.rows[0];
+    res.json({
+      success: true,
+      data: row
+    });
+    
+  } catch (error) {
+    console.error('Get report error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Rapor bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const downloadReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { signed = 'false' } = req.query;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
+              e.name as equipment_name, e.type as equipment_type, e.template,
+              t.name as technician_name, t.surname as technician_surname,
+              wo.work_order_number, cc.name as customer_name,
+              comp.name as company_name, comp.logo_url
+       FROM reports r
+       JOIN inspections i ON r.inspection_id = i.id
+       JOIN equipment e ON i.equipment_id = e.id
+       JOIN technicians t ON i.technician_id = t.id
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       JOIN customer_companies cc ON wo.customer_company_id = cc.id
+       JOIN companies comp ON wo.company_id = comp.id
+       WHERE r.id = $1 AND wo.company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Rapor bulunamadı'
+        }
+      });
+    }
+    
+    const report = result.rows[0];
+    const wantSigned = signed === 'true';
+
+    let finalPath = wantSigned ? report.signed_pdf_path : report.unsigned_pdf_path;
+    if (!finalPath || !(await fileExists(finalPath))) {
+      // Backfill from legacy base64 if present
+      let b64 = null;
+      if (wantSigned && report.is_signed && report.signed_pdf_base64) {
+        b64 = normalizeToBase64(report.signed_pdf_base64);
+      } else if (!wantSigned && report.unsigned_pdf_base64) {
+        b64 = normalizeToBase64(report.unsigned_pdf_base64);
+      }
+      if (b64) {
+        const out = wantSigned ? signedPdfPath(report.id) : unsignedPdfPath(report.id);
+        await writeFileAtomic(out, Buffer.from(b64, 'base64'));
+        await pool.query(
+          wantSigned
+            ? 'UPDATE reports SET signed_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2'
+            : 'UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [out, id]
+        );
+        finalPath = out;
+      } else if (!wantSigned) {
+        // Generate unsigned on the fly
+        const html = generateReportHTML(report);
+        const genB64 = await generatePDFFromHTML(html);
+        const out = unsignedPdfPath(report.id);
+        await writeFileAtomic(out, Buffer.from(genB64, 'base64'));
+        await pool.query('UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [out, id]);
+        finalPath = out;
+      }
+    }
+
+    if (!finalPath || !(await fileExists(finalPath))) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'PDF rapor bulunamadı' } });
+    }
+
+    const filename = `${report.equipment_name}_${report.work_order_number}_${report.inspection_date}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.sendFile(path.resolve(finalPath));
+    
+  } catch (error) {
+    console.error('Download report error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Rapor indirilirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const signReport = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+--- backend/controllers/technicianController.js
+const bcrypt = require('bcryptjs');
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const getTechnicians = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT id, name, surname, email, phone, permissions, is_active, created_at, updated_at 
+       FROM technicians 
+       WHERE company_id = $1 
+       ORDER BY created_at DESC`,
+      [companyId]
+    );
+    
+    res.json({
+      success: true,
+      data: result.rows
+    });
+    
+  } catch (error) {
+    console.error('Get technicians error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Teknisyenler listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getTechnician = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT id, name, surname, email, phone, permissions, is_active, created_at, updated_at 
+       FROM technicians 
+       WHERE id = $1 AND company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Teknisyen bulunamadı'
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Get technician error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Teknisyen bilgileri alınırken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const createTechnician = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { name, surname, email, phone, password, eSignaturePin, permissions } = req.body;
+    const companyId = req.user.company_id;
+    
+    // Check if email already exists
+    const existingTechnician = await pool.query(
+      'SELECT id FROM technicians WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    
+    if (existingTechnician.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'Bu e-posta adresi ile kayıtlı teknisyen zaten mevcut'
+        }
+      });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const result = await pool.query(
+      `INSERT INTO technicians (company_id, name, surname, email, phone, password_hash, e_signature_pin, permissions) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+       RETURNING id, name, surname, email, phone, permissions, is_active, created_at, updated_at`,
+      [companyId, name, surname, email.toLowerCase(), phone, hashedPassword, eSignaturePin || null, JSON.stringify(permissions || [])]
+    );
+    
+    res.status(201).json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Create technician error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Teknisyen oluşturulurken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const updateTechnician = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Geçersiz veri',
+          details: errors.array()
+        }
+      });
+    }
+    
+    const { id } = req.params;
+    const { name, surname, email, phone, eSignaturePin, isActive } = req.body;
+    const companyId = req.user.company_id;
+    
+    // Check if technician exists and belongs to the same company
+    const existingTechnician = await pool.query(
+      'SELECT id FROM technicians WHERE id = $1 AND company_id = $2',
+      [id, companyId]
+    );
+    
+    if (existingTechnician.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Teknisyen bulunamadı'
+        }
+      });
+    }
+    
+    // Check if email conflicts with another technician
+    const emailConflict = await pool.query(
+      'SELECT id FROM technicians WHERE email = $1 AND id != $2',
+      [email.toLowerCase(), id]
+    );
+    
+    if (emailConflict.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: 'Bu e-posta adresi ile başka bir teknisyen zaten kayıtlı'
+        }
+      });
+    }
+--- backend/controllers/uploadController.js
+const pool = require('../config/database');
+const path = require('path');
+const fs = require('fs');
+
+const uploadCompanyLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_FILE',
+          message: 'Dosya seçilmedi'
+        }
+      });
+    }
+    
+    const companyId = req.user.company_id;
+    const logoUrl = `/uploads/logos/${req.file.filename}`;
+    
+    // Update company logo URL in database
+    const result = await pool.query(
+      'UPDATE companies SET logo_url = $1 WHERE id = $2 RETURNING logo_url',
+      [logoUrl, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      // Clean up uploaded file if company update failed
+      fs.unlinkSync(req.file.path);
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Firma bulunamadı'
+        }
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: {
+        logoUrl: logoUrl,
+        filename: req.file.filename,
+        size: req.file.size
+      },
+      message: 'Logo başarıyla yüklendi'
+    });
+    
+  } catch (error) {
+    // Clean up uploaded file on error
+    if (req.file && req.file.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error cleaning up file:', unlinkError);
+      }
+    }
+    
+    console.error('Upload company logo error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Logo yüklenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const uploadInspectionPhotos = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'NO_FILES',
+          message: 'Fotoğraf seçilmedi'
+        }
+      });
+    }
+    
+    const inspectionId = req.params.inspectionId;
+    const companyId = req.user.company_id;
+    
+    // Verify inspection exists and belongs to the company
+    const inspectionCheck = await pool.query(
+      `SELECT i.id, i.photo_urls, i.inspection_data, wo.company_id
+       FROM inspections i
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       WHERE i.id = $1`,
+      [inspectionId]
+    );
+    
+    if (inspectionCheck.rows.length === 0) {
+      // Clean up uploaded files
+      req.files.forEach(file => {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (error) {
+          console.error('Error cleaning up file:', error);
+        }
+      });
+      
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Muayene bulunamadı'
+        }
+      });
+    }
+    
+    const inspection = inspectionCheck.rows[0];
+    
+    if (inspection.company_id !== companyId) {
+      // Clean up uploaded files
+      req.files.forEach(file => {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (error) {
+          console.error('Error cleaning up file:', error);
+        }
+      });
+      
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'PERMISSION_DENIED',
+          message: 'Bu muayeneye erişim yetkiniz yok'
+        }
+      });
+    }
+    
+    // Process uploaded files
+    const newPhotoUrls = req.files.map(file => `/uploads/inspections/${inspectionId}/${file.filename}`);
+    
+    // Get existing photo URLs
+    const existingPhotos = inspection.photo_urls || [];
+    const allPhotos = [...existingPhotos, ...newPhotoUrls];
+    
+    // Optionally map uploaded photos to a specific template field
+    let updatedInspectionData = inspection.inspection_data || {};
+    const bodyFieldName = req.body?.fieldName || req.body?.fieldNames;
+    if (bodyFieldName) {
+      const fieldNames = Array.isArray(bodyFieldName) ? bodyFieldName : newPhotoUrls.map(() => bodyFieldName);
+      fieldNames.forEach((fname, idx) => {
+        if (typeof fname === 'string' && fname.trim()) {
+          const url = newPhotoUrls[idx] || newPhotoUrls[newPhotoUrls.length - 1];
+          if (!Array.isArray(updatedInspectionData[fname])) {
+            updatedInspectionData[fname] = [];
+          }
+          updatedInspectionData[fname].push(url);
+        }
+      });
+    }
+
+    // Update inspection with new photo URLs and optional mapping
+    const result = await pool.query(
+      'UPDATE inspections SET photo_urls = $1, inspection_data = $2 WHERE id = $3 RETURNING photo_urls',
+      [JSON.stringify(allPhotos), JSON.stringify(updatedInspectionData), inspectionId]
+    );
+    
+    const uploadedFiles = req.files.map(file => ({
+      filename: file.filename,
+      originalName: file.originalname,
+      size: file.size,
+      url: `/uploads/inspections/${inspectionId}/${file.filename}`
+    }));
+    
+    res.json({
+      success: true,
+      data: {
+        uploadedPhotos: uploadedFiles,
+        totalPhotos: allPhotos.length
+      },
+      message: `${req.files.length} fotoğraf başarıyla yüklendi`
+    });
+    
+  } catch (error) {
+    // Clean up uploaded files on error
+    if (req.files) {
+--- backend/controllers/workOrderController.js
+const { body, validationResult } = require('express-validator');
+const pool = require('../config/database');
+
+const generateWorkOrderNumber = () => {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `WO-${timestamp}${random}`;
+};
+
+const getWorkOrders = async (req, res) => {
+  try {
+    const companyId = req.user.company_id;
+    const { page = 1, limit = 20, status, assignedTo, search, customerCompanyId } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT wo.*, cc.name as customer_name, cc.email as customer_email,
+             t.name as created_by_name, t.surname as created_by_surname,
+             o.offer_number,
+             COUNT(i.id) as inspection_count,
+             COUNT(CASE WHEN i.status = 'completed' THEN 1 END) as completed_inspections
+      FROM work_orders wo
+      JOIN customer_companies cc ON wo.customer_company_id = cc.id
+      JOIN technicians t ON wo.created_by = t.id
+      LEFT JOIN offers o ON wo.offer_id = o.id
+      LEFT JOIN inspections i ON wo.id = i.work_order_id
+      WHERE wo.company_id = $1
+    `;
+    let params = [companyId];
+    
+    if (status) {
+      query += ` AND wo.status = $${params.length + 1}`;
+      params.push(status);
+    }
+    
+    if (search) {
+      query += ` AND (wo.work_order_number ILIKE $${params.length + 1} OR cc.name ILIKE $${params.length + 1})`;
+      params.push(`%${search}%`);
+    }
+    
+    if (customerCompanyId) {
+      query += ` AND wo.customer_company_id = $${params.length + 1}`;
+      params.push(customerCompanyId);
+    }
+    
+    if (assignedTo) {
+      query += ` AND EXISTS (
+        SELECT 1 FROM work_order_assignments woa 
+        WHERE woa.work_order_id = wo.id AND woa.technician_id = $${params.length + 1}
+      )`;
+      params.push(assignedTo);
+    }
+    
+    query += ` GROUP BY wo.id, cc.name, cc.email, t.name, t.surname, o.offer_number`;
+    query += ` ORDER BY wo.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get assigned technicians for each work order
+    for (const workOrder of result.rows) {
+      const techniciansResult = await pool.query(
+        `SELECT t.id, t.name, t.surname, t.email
+         FROM work_order_assignments woa
+         JOIN technicians t ON woa.technician_id = t.id
+         WHERE woa.work_order_id = $1`,
+        [workOrder.id]
+      );
+      workOrder.assignedTechnicians = techniciansResult.rows;
+    }
+    
+    // Get total count for pagination
+    let countQuery = `
+      SELECT COUNT(DISTINCT wo.id) 
+      FROM work_orders wo 
+      JOIN customer_companies cc ON wo.customer_company_id = cc.id 
+      WHERE wo.company_id = $1
+    `;
+    let countParams = [companyId];
+    
+    if (status) {
+      countQuery += ` AND wo.status = $${countParams.length + 1}`;
+      countParams.push(status);
+    }
+    
+    if (search) {
+      countQuery += ` AND (wo.work_order_number ILIKE $${countParams.length + 1} OR cc.name ILIKE $${countParams.length + 1})`;
+      countParams.push(`%${search}%`);
+    }
+    
+    if (customerCompanyId) {
+      countQuery += ` AND wo.customer_company_id = $${countParams.length + 1}`;
+      countParams.push(customerCompanyId);
+    }
+    
+    if (assignedTo) {
+      countQuery += ` AND EXISTS (
+        SELECT 1 FROM work_order_assignments woa 
+        WHERE woa.work_order_id = wo.id AND woa.technician_id = $${countParams.length + 1}
+      )`;
+      countParams.push(assignedTo);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.json({
+      success: true,
+      data: {
+        workOrders: result.rows,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: (page * limit) < totalCount,
+          hasPrev: page > 1
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Get work orders error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'İş emirleri listelenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
+const getWorkOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    
+    const result = await pool.query(
+      `SELECT wo.*, cc.name as customer_name, cc.email as customer_email,
+              cc.tax_number as customer_tax_number, cc.address as customer_address,
+              cc.contact as customer_contact, cc.authorized_person as customer_authorized_person,
+              t.name as created_by_name, t.surname as created_by_surname,
+              o.offer_number, o.items as offer_items
+       FROM work_orders wo
+       JOIN customer_companies cc ON wo.customer_company_id = cc.id
+       JOIN technicians t ON wo.created_by = t.id
+       LEFT JOIN offers o ON wo.offer_id = o.id
+       WHERE wo.id = $1 AND wo.company_id = $2`,
+      [id, companyId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'İş emri bulunamadı'
+        }
+      });
+    }
+    
+    const workOrder = result.rows[0];
+    
+    // Get assigned technicians
+    const techniciansResult = await pool.query(
+      `SELECT t.id, t.name, t.surname, t.email, woa.assigned_at
+       FROM work_order_assignments woa
+       JOIN technicians t ON woa.technician_id = t.id
+       WHERE woa.work_order_id = $1`,
+      [id]
+    );
+    workOrder.assignedTechnicians = techniciansResult.rows;
+    
+    // Get inspections
+    const inspectionsResult = await pool.query(
+      `SELECT i.*, e.name as equipment_name, e.type as equipment_type,
+              t.name as technician_name, t.surname as technician_surname
+       FROM inspections i
+       JOIN equipment e ON i.equipment_id = e.id

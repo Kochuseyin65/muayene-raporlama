@@ -27,7 +27,8 @@ const logoStorage = multer.diskStorage({
 // Storage configuration for inspection photos
 const inspectionPhotoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const inspectionId = req.params.id;
+    // Support both routes that may use :id or :inspectionId
+    const inspectionId = req.params.inspectionId || req.params.id;
     const uploadPath = path.join(__dirname, '../uploads/inspections', inspectionId);
     ensureUploadDir(uploadPath);
     cb(null, uploadPath);

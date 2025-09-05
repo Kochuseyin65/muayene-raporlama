@@ -559,7 +559,41 @@ const updateWorkOrderStatus = async (req, res) => {
         }
       });
     }
-    
+    // Simple transition/business rules
+    // completed: all inspections must be completed
+    if (status === 'completed') {
+      const pendingCount = await pool.query(
+        `SELECT COUNT(*) AS cnt FROM inspections WHERE work_order_id = $1 AND status <> 'completed'`,
+        [id]
+      );
+      if (parseInt(pendingCount.rows[0].cnt) > 0) {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'CONFLICT', message: 'Tüm muayeneler tamamlanmadan iş emri tamamlanamaz' }
+        });
+      }
+    }
+    // approved: must be completed first
+    if (status === 'approved') {
+      const wo = existingWorkOrder.rows[0];
+      if (wo.current_status !== 'completed') {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'CONFLICT', message: 'İş emri onaylanmadan önce tamamlanmış olmalıdır' }
+        });
+      }
+    }
+    // sent: must be approved first
+    if (status === 'sent') {
+      const wo = existingWorkOrder.rows[0];
+      if (wo.current_status !== 'approved') {
+        return res.status(409).json({
+          success: false,
+          error: { code: 'CONFLICT', message: 'İş emri gönderilmeden önce onaylanmış olmalıdır' }
+        });
+      }
+    }
+
     const result = await pool.query(
       `UPDATE work_orders 
        SET status = $1

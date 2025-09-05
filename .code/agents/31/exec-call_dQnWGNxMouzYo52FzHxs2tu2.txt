@@ -1,0 +1,1347 @@
+{
+  "total": 26,
+  "passed": 22,
+  "failed": 4,
+  "details": [
+    {
+      "name": "health",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "message": "Server is running"
+        }
+      }
+    },
+    {
+      "name": "login_admin",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJhZG1pbkBhYmMuY29tIiwiY29tcGFueUlkIjoxLCJpYXQiOjE3NTcxMDUyNzIsImV4cCI6MTc1NzcxMDA3Mn0.GOGsotfPzAeBlpvnIMRzhDcHEwKgPEQoeLjfN8aBT8I",
+            "user": {
+              "id": 2,
+              "company_id": 1,
+              "name": "Firma",
+              "surname": "Admin",
+              "email": "admin@abc.com",
+              "phone": "+90 555 0002",
+              "permissions": [
+                "companyAdmin",
+                "viewTechnicians",
+                "createTechnician",
+                "editTechnician",
+                "viewCustomers",
+                "createCustomer",
+                "editCustomer",
+                "viewEquipment",
+                "createEquipment",
+                "editEquipment",
+                "viewOffers",
+                "createOffer",
+                "editOffer",
+                "approveOffer",
+                "sendOffer",
+                "viewWorkOrders",
+                "createWorkOrder",
+                "editWorkOrder",
+                "assignWorkOrder",
+                "updateWorkOrderStatus",
+                "viewInspections",
+                "editInspection",
+                "saveInspection",
+                "completeInspection",
+                "uploadPhotos",
+                "viewReports",
+                "downloadReports",
+                "signReports",
+                "sendReports",
+                "viewDashboard",
+                "viewCalendar"
+              ],
+              "is_active": true,
+              "created_at": "2025-08-16T20:42:54.349Z",
+              "updated_at": "2025-08-16T20:42:54.349Z",
+              "company_name": "ABC Mühendislik A.Ş."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "profile_admin",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "user": {
+              "id": 2,
+              "company_id": 1,
+              "name": "Firma",
+              "surname": "Admin",
+              "email": "admin@abc.com",
+              "phone": "+90 555 0002",
+              "permissions": [
+                "companyAdmin",
+                "viewTechnicians",
+                "createTechnician",
+                "editTechnician",
+                "viewCustomers",
+                "createCustomer",
+                "editCustomer",
+                "viewEquipment",
+                "createEquipment",
+                "editEquipment",
+                "viewOffers",
+                "createOffer",
+                "editOffer",
+                "approveOffer",
+                "sendOffer",
+                "viewWorkOrders",
+                "createWorkOrder",
+                "editWorkOrder",
+                "assignWorkOrder",
+                "updateWorkOrderStatus",
+                "viewInspections",
+                "editInspection",
+                "saveInspection",
+                "completeInspection",
+                "uploadPhotos",
+                "viewReports",
+                "downloadReports",
+                "signReports",
+                "sendReports",
+                "viewDashboard",
+                "viewCalendar"
+              ],
+              "is_active": true,
+              "created_at": "2025-08-16T20:42:54.349Z",
+              "updated_at": "2025-08-16T20:42:54.349Z",
+              "company_name": "ABC Mühendislik A.Ş."
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "create_customer",
+      "success": true,
+      "status": 201,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 16,
+            "name": "Test Musteri 1757105272",
+            "tax_number": "91757105272",
+            "address": null,
+            "contact": null,
+            "email": "test1757105272@ex.com",
+            "authorized_person": null,
+            "created_at": "2025-09-05T20:47:52.362Z",
+            "updated_at": "2025-09-05T20:47:52.362Z"
+          }
+        },
+        "customer_id": 16
+      }
+    },
+    {
+      "name": "create_equipment",
+      "success": true,
+      "status": 201,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 26,
+            "name": "Kule Vinc 1757105272",
+            "type": "vinc",
+            "template": {
+              "sections": [
+                {
+                  "id": "genel",
+                  "type": "key_value",
+                  "items": [
+                    {
+                      "name": "muayene_tarihi",
+                      "label": "Tarih",
+                      "required": true,
+                      "valueType": "date"
+                    },
+                    {
+                      "name": "muayene_yeri",
+                      "label": "Yer",
+                      "required": true,
+                      "valueType": "text"
+                    }
+                  ],
+                  "title": "Genel"
+                },
+                {
+                  "id": "guvenlik",
+                  "type": "checklist",
+                  "title": "Güvenlik",
+                  "questions": [
+                    {
+                      "name": "emniyet_sistemi",
+                      "label": "Emniyet",
+                      "options": [
+                        "Uygun",
+                        "Uygun Değil"
+                      ],
+                      "required": true,
+                      "passValues": [
+                        "Uygun"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "fotolar",
+                  "type": "photos",
+                  "field": "genel_gorunum",
+                  "title": "Fotoğraflar",
+                  "display": "grid",
+                  "maxCount": 6
+                }
+              ]
+            },
+            "is_active": true,
+            "is_active": true,
+            "created_at": "2025-09-05T20:47:52.383Z",
+            "updated_at": "2025-09-05T20:47:52.383Z"
+          }
+        },
+        "equipment_id": 26
+      }
+    },
+    {
+      "name": "create_offer",
+      "success": true,
+      "status": 201,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 16,
+            "company_id": 1,
+            "offer_number": "OFFER-272396529",
+            "customer_company_id": 16,
+            "status": "pending",
+            "items": [
+              {
+                "quantity": 1,
+                "unitPrice": 1000,
+                "equipmentId": 26,
+                "equipmentName": "Kule Vinc 1757105272"
+              }
+            ],
+            "notes": "Otomatik test teklifi",
+            "total_amount": "1000.00",
+            "tracking_token": "85a56b0cd50b2cdda4bfadf4079abe2c6ee27dde1e58b5665edeec0f8050264e",
+            "created_by": 2,
+            "approved_by": null,
+            "approved_at": null,
+            "sent_at": null,
+            "viewed_at": null,
+            "created_at": "2025-09-05T20:47:52.397Z",
+            "updated_at": "2025-09-05T20:47:52.397Z",
+            "customer_decision": null,
+            "customer_decision_note": null,
+            "customer_decision_at": null
+          }
+        },
+        "offer_id": 16
+      }
+    },
+    {
+      "name": "approve_offer",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 16,
+            "company_id": 1,
+            "offer_number": "OFFER-272396529",
+            "customer_company_id": 16,
+            "status": "approved",
+            "items": [
+              {
+                "quantity": 1,
+                "unitPrice": 1000,
+                "equipmentId": 26,
+                "equipmentName": "Kule Vinc 1757105272"
+              }
+            ],
+            "notes": "Otomatik test teklifi",
+            "total_amount": "1000.00",
+            "tracking_token": "85a56b0cd50b2cdda4bfadf4079abe2c6ee27dde1e58b5665edeec0f8050264e",
+            "created_by": 2,
+            "approved_by": 2,
+            "approved_at": "2025-09-05T20:47:52.408Z",
+            "sent_at": null,
+            "viewed_at": null,
+            "created_at": "2025-09-05T20:47:52.397Z",
+            "updated_at": "2025-09-05T20:47:52.408Z",
+            "customer_decision": null,
+            "customer_decision_note": null,
+            "customer_decision_at": null
+          },
+          "message": "Teklif başarıyla onaylandı"
+        }
+      }
+    },
+    {
+      "name": "send_offer",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "message": "Teklif başarıyla gönderildi",
+          "data": {
+            "trackingUrl": "http://localhost:5173/track/85a56b0cd50b2cdda4bfadf4079abe2c6ee27dde1e58b5665edeec0f8050264e",
+            "customerEmail": "test1757105272@ex.com",
+            "customerName": "Test Musteri 1757105272"
+          }
+        },
+        "tracking_token": "85a56b0cd50b2cdda4bfadf4079abe2c6ee27dde1e58b5665edeec0f8050264e"
+      }
+    },
+    {
+      "name": "public_offer_accept",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "message": "Teklif müşteri tarafından onaylandı",
+          "data": {
+            "id": 16,
+            "company_id": 1,
+            "offer_number": "OFFER-272396529",
+            "customer_company_id": 16,
+            "status": "approved",
+            "items": [
+              {
+                "quantity": 1,
+                "unitPrice": 1000,
+                "equipmentId": 26,
+                "equipmentName": "Kule Vinc 1757105272"
+              }
+            ],
+            "notes": "Otomatik test teklifi",
+            "total_amount": "1000.00",
+            "tracking_token": "85a56b0cd50b2cdda4bfadf4079abe2c6ee27dde1e58b5665edeec0f8050264e",
+            "created_by": 2,
+            "approved_by": 2,
+            "approved_at": "2025-09-05T20:47:52.408Z",
+            "sent_at": "2025-09-05T20:47:52.420Z",
+            "viewed_at": "2025-09-05T20:47:52.435Z",
+            "created_at": "2025-09-05T20:47:52.397Z",
+            "updated_at": "2025-09-05T20:47:52.435Z",
+            "customer_decision": "accepted",
+            "customer_decision_note": "OK",
+            "customer_decision_at": "2025-09-05T20:47:52.435Z"
+          }
+        }
+      }
+    },
+    {
+      "name": "convert_to_work_order",
+      "success": false,
+      "status": 500,
+      "message": null,
+      "data": {
+        "response": {
+          "success": false,
+          "error": {
+            "code": "INTERNAL_SERVER_ERROR",
+            "message": "İş emri oluşturulurken bir hata oluştu"
+          }
+        },
+        "work_order_id": null
+      }
+    },
+    {
+      "name": "list_inspections",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "inspections": [
+              {
+                "id": 15,
+                "work_order_id": 15,
+                "equipment_id": 25,
+                "technician_id": 2,
+                "inspection_date": "2025-11-30T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-05",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/15/inspection_1757104826786_1n78oy.png"
+                ],
+                "created_at": "2025-09-05T20:40:26.752Z",
+                "updated_at": "2025-09-05T20:40:26.834Z",
+                "equipment_name": "Kule Vinc 1757104826",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-826752081",
+                "customer_name": "Test Musteri 1757104826",
+                "report_id": 11,
+                "is_signed": true,
+                "qr_token": "96a074bceb5738b7ff0603e5666e5243"
+              },
+              {
+                "id": 14,
+                "work_order_id": 14,
+                "equipment_id": 24,
+                "technician_id": 2,
+                "inspection_date": "2025-11-26T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-05",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/14/inspection_1757103832718_zcx0br.png"
+                ],
+                "created_at": "2025-09-05T20:23:52.678Z",
+                "updated_at": "2025-09-05T20:23:52.763Z",
+                "equipment_name": "Kule Vinc 1757103832",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-832678124",
+                "customer_name": "Test Musteri 1757103832",
+                "report_id": 10,
+                "is_signed": true,
+                "qr_token": "12c16ae48ae6e6f8fff9acb0bc61d11f"
+              },
+              {
+                "id": 8,
+                "work_order_id": 8,
+                "equipment_id": 18,
+                "technician_id": 2,
+                "inspection_date": "2025-11-21T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-03",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/8/inspection_1756933189685_kxjowk.png"
+                ],
+                "created_at": "2025-09-03T20:59:49.655Z",
+                "updated_at": "2025-09-03T20:59:49.730Z",
+                "equipment_name": "Kule Vinc 1756933189",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-189655172",
+                "customer_name": "Test Musteri 1756933189",
+                "report_id": 4,
+                "is_signed": true,
+                "qr_token": "117df8a14f173a76bedf20ca2209ea79"
+              },
+              {
+                "id": 11,
+                "work_order_id": 11,
+                "equipment_id": 21,
+                "technician_id": 2,
+                "inspection_date": "2025-11-13T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-04",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/11/inspection_1756937951238_qs6vif.png"
+                ],
+                "created_at": "2025-09-03T22:19:11.218Z",
+                "created_at": "2025-09-03T22:19:11.218Z",
+                "updated_at": "2025-09-03T22:19:11.270Z",
+                "equipment_name": "Kule Vinc 1756937951",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-951218008",
+                "customer_name": "Test Musteri 1756937951",
+                "report_id": 7,
+                "is_signed": true,
+                "qr_token": "9ac6e3741ea20a6529ef00356a65dfee"
+              },
+              {
+                "id": 7,
+                "work_order_id": 7,
+                "equipment_id": 17,
+                "technician_id": 2,
+                "inspection_date": "2025-10-23T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-03",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/7/inspection_1756929380952_ow1cxy.png"
+                ],
+                "created_at": "2025-09-03T19:56:20.928Z",
+                "updated_at": "2025-09-03T19:56:20.990Z",
+                "equipment_name": "Kule Vinc 1756929380",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-380928031",
+                "customer_name": "Test Musteri 1756929380",
+                "report_id": 3,
+                "is_signed": true,
+                "qr_token": "4722f3185ec1417895c19fc9ffa397dd"
+              },
+              {
+                "id": 13,
+                "work_order_id": 13,
+                "equipment_id": 23,
+                "technician_id": 2,
+                "inspection_date": "2025-09-25T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-04",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/13/inspection_1756937992190_21mhdm.png"
+                ],
+                "created_at": "2025-09-03T22:19:52.175Z",
+                "updated_at": "2025-09-03T22:19:52.216Z",
+                "equipment_name": "Kule Vinc 1756937992",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-992175701",
+                "customer_name": "Test Musteri 1756937992",
+                "report_id": 9,
+                "is_signed": true,
+                "qr_token": "16d605e1f136ebfc0d2bef9bf780f490"
+              },
+              {
+                "id": 10,
+                "work_order_id": 10,
+                "equipment_id": 20,
+                "technician_id": 2,
+                "inspection_date": "2025-09-19T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-04",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/10/inspection_1756937716532_71l3e7.png"
+                ],
+                "created_at": "2025-09-03T22:15:16.508Z",
+                "updated_at": "2025-09-03T22:15:16.571Z",
+                "equipment_name": "Kule Vinc 1756937716",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-716508844",
+                "customer_name": "Test Musteri 1756937716",
+                "report_id": 6,
+                "is_signed": true,
+                "qr_token": "bf248f447120b6b704aca4a3e135803d"
+              },
+              {
+                "id": 9,
+                "work_order_id": 9,
+                "equipment_id": 19,
+                "technician_id": 2,
+                "inspection_date": "2025-09-10T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-04",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/9/inspection_1756937527595_5ap6a2.png"
+                ],
+                "created_at": "2025-09-03T22:12:07.577Z",
+                "updated_at": "2025-09-03T22:12:07.624Z",
+                "equipment_name": "Kule Vinc 1756937527",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-527577495",
+                "customer_name": "Test Musteri 1756937527",
+                "report_id": 5,
+                "is_signed": true,
+                "qr_token": "2307d03e391e9828407bca243440af92"
+              },
+              {
+                "id": 12,
+                "work_order_id": 12,
+                "equipment_id": 22,
+                "technician_id": 2,
+                "inspection_date": "2025-09-09T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-04",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/12/inspection_1756937976734_k67lp4.png"
+                ],
+                "created_at": "2025-09-03T22:19:36.718Z",
+                "updated_at": "2025-09-03T22:19:36.759Z",
+                "equipment_name": "Kule Vinc 1756937976",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-976718531",
+                "customer_name": "Test Musteri 1756937976",
+                "report_id": 8,
+                "is_signed": true,
+                "qr_token": "83b8c0c33bb7939d7025909d6237a3b7"
+              },
+              {
+                "id": 3,
+                "work_order_id": 3,
+                "equipment_id": 13,
+                "technician_id": 2,
+                "inspection_date": "2025-09-02T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "completed",
+                "inspection_data": {
+                  "test": "ok",
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-03",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/3/inspection_1756926284955_fvr7ir.png",
+                  "/uploads/inspections/3/inspection_1756927943211_sldnp7.png",
+                  "/uploads/inspections/3/inspection_1756927961589_uq7r8q.png",
+                  "/uploads/inspections/3/inspection_1756929106275_r2nld1.png"
+                ],
+                "created_at": "2025-09-03T19:04:44.936Z",
+                "updated_at": "2025-09-03T19:51:46.320Z",
+                "equipment_name": "Kule Vinc 1756926284",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-284936958",
+                "customer_name": "Test Musteri 1756926284",
+                "report_id": 2,
+                "is_signed": true,
+                "qr_token": "105db1f889810e86e2e2589baa882b21"
+              },
+              {
+                "id": 2,
+                "work_order_id": 2,
+                "equipment_id": 1,
+                "technician_id": 2,
+                "inspection_date": "2025-08-24T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "17:00:00",
+                "status": "in_progress",
+                "inspection_data": {
+                  "muayene_yeri": "Saha A",
+                  "muayene_tarihi": "2025-09-03",
+                  "emniyet_sistemi": "Uygun"
+                },
+                "photo_urls": [
+                  "/uploads/inspections/2/inspection_1756849577149_e207d0.png",
+                  "/uploads/inspections/2/inspection_1756849835943_6phvmi.png",
+                  "/uploads/inspections/2/inspection_1756849892048_wt2dbr.png",
+                  "/uploads/inspections/2/inspection_1756850327047_c0fdz1.png",
+                  "/uploads/inspections/2/inspection_1756922000963_52rte9.png",
+                  "/uploads/inspections/2/inspection_1756924103841_knguox.png",
+                  "/uploads/inspections/2/inspection_1756924179688_6alvax.png",
+                  "/uploads/inspections/2/inspection_1756924212862_gljba1.png"
+                ],
+                "created_at": "2025-08-16T20:56:09.166Z",
+                "updated_at": "2025-09-03T18:30:12.875Z",
+                "equipment_name": "Kule Vinç",
+                "equipment_type": "vinc",
+                "technician_name": "Firma",
+                "technician_surname": "Admin",
+                "work_order_number": "WO-769167706",
+                "customer_name": "XYZ İnşaat Ltd.Şti.",
+                "report_id": 1,
+                "is_signed": false,
+                "qr_token": "da129ea59eff0f1b13431b039f6c2422"
+              },
+              {
+                "id": 1,
+                "work_order_id": 1,
+                "equipment_id": 1,
+                "technician_id": 3,
+                "inspection_date": "2025-08-19T21:00:00.000Z",
+                "start_time": "09:00:00",
+                "end_time": "12:00:00",
+                "status": "not_started",
+                "inspection_data": {},
+                "photo_urls": [],
+                "created_at": "2025-08-16T20:52:08.388Z",
+                "updated_at": "2025-08-16T20:52:08.388Z",
+                "equipment_name": "Kule Vinç",
+                "equipment_type": "vinc",
+                "technician_name": "Ahmet",
+                "technician_surname": "Yılmaz",
+                "work_order_number": "WO-379185827",
+                "customer_name": "XYZ İnşaat Ltd.Şti.",
+                "report_id": null,
+                "is_signed": null,
+                "qr_token": null
+              }
+            ],
+            "pagination": {
+              "currentPage": 1,
+              "totalPages": 1,
+              "totalCount": 12,
+              "hasNext": false,
+              "hasPrev": false
+            }
+          }
+        },
+        "inspection_id": 15
+      }
+    },
+    {
+      "name": "upload_inspection_photo",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "inspection": {
+              "id": 15,
+              "work_order_id": 15,
+              "equipment_id": 25,
+              "technician_id": 2,
+              "inspection_date": "2025-11-30T21:00:00.000Z",
+              "start_time": "09:00:00",
+              "end_time": "17:00:00",
+              "status": "completed",
+              "inspection_data": {
+                "test": "ok",
+                "muayene_yeri": "Saha A",
+                "genel_gorunum": [
+                  "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+                ],
+                "muayene_tarihi": "2025-09-05",
+                "emniyet_sistemi": "Uygun"
+              },
+              "photo_urls": [
+                "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+                "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+              ],
+              "created_at": "2025-09-05T20:40:26.752Z",
+              "updated_at": "2025-09-05T20:47:52.480Z"
+            },
+            "uploadedPhotos": [
+              "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+            ]
+          },
+          "message": "Fotoğraflar başarıyla yüklendi"
+        }
+      }
+    },
+    {
+      "name": "update_inspection",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 15,
+            "work_order_id": 15,
+            "equipment_id": 25,
+            "technician_id": 2,
+            "inspection_date": "2025-11-30T21:00:00.000Z",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "status": "in_progress",
+            "inspection_data": {
+              "test": "ok",
+              "muayene_yeri": "Saha A",
+              "muayene_tarihi": "2025-09-05",
+              "emniyet_sistemi": "Uygun"
+            },
+            "photo_urls": [
+              "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+              "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+            ],
+            "created_at": "2025-09-05T20:40:26.752Z",
+            "updated_at": "2025-09-05T20:47:52.489Z"
+          }
+        }
+      }
+    },
+    {
+      "name": "save_inspection",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "inspection": {
+              "id": 15,
+              "work_order_id": 15,
+              "equipment_id": 25,
+              "technician_id": 2,
+              "inspection_date": "2025-11-30T21:00:00.000Z",
+              "start_time": "09:00:00",
+              "end_time": "17:00:00",
+              "status": "in_progress",
+              "inspection_data": {
+                "test": "ok",
+                "muayene_yeri": "Saha A",
+                "muayene_tarihi": "2025-09-05",
+                "emniyet_sistemi": "Uygun"
+              },
+              "photo_urls": [
+                "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+                "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+              ],
+              "created_at": "2025-09-05T20:40:26.752Z",
+              "updated_at": "2025-09-05T20:47:52.489Z",
+              "template": {
+                "sections": [
+                  {
+                    "id": "genel",
+                    "type": "key_value",
+                    "items": [
+                      {
+                        "name": "muayene_tarihi",
+                        "label": "Tarih",
+                        "required": true,
+                        "valueType": "date"
+                      },
+                      {
+                        "name": "muayene_yeri",
+                        "label": "Yer",
+                        "required": true,
+                        "valueType": "text"
+                      }
+                    ],
+                    "title": "Genel"
+                  },
+                  {
+                    "id": "guvenlik",
+                    "type": "checklist",
+                    "title": "Güvenlik",
+                    "questions": [
+                      {
+                        "name": "emniyet_sistemi",
+                        "label": "Emniyet",
+                        "label": "Emniyet",
+                        "options": [
+                          "Uygun",
+                          "Uygun Değil"
+                        ],
+                        "required": true,
+                        "passValues": [
+                          "Uygun"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "id": "fotolar",
+                    "type": "photos",
+                    "field": "genel_gorunum",
+                    "title": "Fotoğraflar",
+                    "display": "grid",
+                    "maxCount": 6
+                  }
+                ]
+              },
+              "company_id": 1,
+              "customer_name": "Test Musteri 1757104826",
+              "authorized_person": null,
+              "company_name": "ABC Mühendislik A.Ş.",
+              "logo_url": null
+            },
+            "report": {
+              "id": 11,
+              "inspection_id": 15,
+              "is_signed": false,
+              "signed_at": null,
+              "signed_by": null,
+              "qr_token": "706de4611b9de7d28471af2d8e0636c0",
+              "sent_at": null,
+              "created_at": "2025-09-05T20:40:26.814Z",
+              "updated_at": "2025-09-05T20:47:52.498Z",
+              "unsigned_pdf_path": null,
+              "signed_pdf_path": null
+            }
+          },
+          "message": "Muayene başarıyla kaydedildi"
+        },
+        "report_id": 11
+      }
+    },
+    {
+      "name": "complete_inspection",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 15,
+            "work_order_id": 15,
+            "equipment_id": 25,
+            "technician_id": 2,
+            "inspection_date": "2025-11-30T21:00:00.000Z",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "status": "completed",
+            "inspection_data": {
+              "test": "ok",
+              "muayene_yeri": "Saha A",
+              "muayene_tarihi": "2025-09-05",
+              "emniyet_sistemi": "Uygun"
+            },
+            "photo_urls": [
+              "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+              "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+            ],
+            "created_at": "2025-09-05T20:40:26.752Z",
+            "updated_at": "2025-09-05T20:47:52.512Z"
+          },
+          "message": "Muayene başarıyla tamamlandı"
+        }
+      }
+    },
+    {
+      "name": "work_order_status_completed",
+      "success": false,
+      "status": 500,
+      "message": null,
+      "data": {
+        "response": {
+          "success": false,
+          "error": {
+            "code": "INTERNAL_SERVER_ERROR",
+            "message": "İş emri durumu güncellenirken bir hata oluştu"
+          }
+        }
+      }
+    },
+    {
+      "name": "prepare_report_async",
+      "success": true,
+      "status": 202,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "jobId": 17,
+            "status": "pending"
+          }
+        },
+        "job_id": 17
+      }
+    },
+    {
+      "name": "verify_unsigned_path",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 11,
+            "inspection_id": 15,
+            "is_signed": false,
+            "signed_at": null,
+            "signed_by": null,
+            "qr_token": "706de4611b9de7d28471af2d8e0636c0",
+            "sent_at": null,
+            "created_at": "2025-09-05T20:40:26.814Z",
+            "updated_at": "2025-09-05T20:47:55.939Z",
+            "unsigned_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/unsigned.pdf",
+            "signed_pdf_path": null,
+            "inspection_data": {
+              "test": "ok",
+              "muayene_yeri": "Saha A",
+              "muayene_tarihi": "2025-09-05",
+              "emniyet_sistemi": "Uygun"
+            },
+            "inspection_date": "2025-11-30T21:00:00.000Z",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "photo_urls": [
+              "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+              "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+            ],
+            "equipment_name": "Kule Vinc 1757104826",
+            "equipment_type": "vinc",
+            "template": {
+              "sections": [
+                {
+                  "id": "genel",
+                  "type": "key_value",
+                  "items": [
+                    {
+                      "name": "muayene_tarihi",
+                      "label": "Tarih",
+                      "required": true,
+                      "valueType": "date"
+                    },
+                    {
+                      "name": "muayene_yeri",
+                      "label": "Yer",
+                      "required": true,
+                      "valueType": "text"
+                    }
+                  ],
+                  "title": "Genel"
+                },
+                {
+                  "id": "guvenlik",
+                  "type": "checklist",
+                  "title": "Güvenlik",
+                  "questions": [
+                    {
+                      "name": "emniyet_sistemi",
+                      "label": "Emniyet",
+                      "options": [
+                        "Uygun",
+                        "Uygun Değil"
+                      ],
+                      "required": true,
+                      "passValues": [
+                        "Uygun"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "fotolar",
+                  "type": "photos",
+                  "field": "genel_gorunum",
+                  "title": "Fotoğraflar",
+                  "display": "grid",
+                  "maxCount": 6
+                }
+              ]
+            },
+            "technician_name": "Firma",
+            "technician_surname": "Admin",
+            "work_order_number": "WO-826752081",
+            "customer_name": "Test Musteri 1757104826",
+            "company_name": "ABC Mühendislik A.Ş.",
+            "logo_url": null
+          }
+        },
+        "unsigned_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/unsigned.pdf"
+      }
+    },
+    {
+      "name": "verify_signing_data_pdf",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "pdfBase64": "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VHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDE4IDAgUgovUGcgMiAwIFIKL0sgWzFdPj4KZW5kb2JqCjE4IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL0gyCi9QIDE1IDAgUgovSyBbMTkgMCBSXT4+CmVuZG9iagoyMyAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgMjIgMCBSCi9QZyAyIDAgUgovSyBbMl0+PgplbmRvYmoKMjIgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVEQKL1AgMjEgMCBSCi9LIFsyMyAwIFJdCi9BIFs8PC9PIC9UYWJsZQovSGVhZGVycyBbXT4+IDw8L08gL1RhYmxlCi9Sb3dTcGFuIDE+PiA8PC9PIC9UYWJsZQovQ29sU3BhbiAxPj5dPj4KZW5kb2JqCjI1IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL05vblN0cnVjdAovUCAyNCAwIFIKL1BnIDIgMCBSCi9LIFszXT4+CmVuZG9iagoyNCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCAyMSAwIFIKL0sgWzI1IDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKMjEgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgMjAgMCBSCi9LIFsyMiAwIFIgMjQgMCBSXT4+CmVuZG9iagoyOCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgMjcgMCBSCi9QZyAyIDAgUgovSyBbNF0+PgplbmRvYmoKMjcgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVEQKL1AgMjYgMCBSCi9LIFsyOCAwIFJdCi9BIFs8PC9PIC9UYWJsZQovSGVhZGVycyBbXT4+IDw8L08gL1RhYmxlCi9Sb3dTcGFuIDE+PiA8PC9PIC9UYWJsZQovQ29sU3BhbiAxPj5dPj4KZW5kb2JqCjMwIDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL05vblN0cnVjdAovUCAyOSAwIFIKL1BnIDIgMCBSCi9LIFs1XT4+CmVuZG9iagoyOSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCAyNiAwIFIKL0sgWzMwIDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKMjYgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgMjAgMCBSCi9LIFsyNyAwIFIgMjkgMCBSXT4+CmVuZG9iagozMyAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgMzIgMCBSCi9QZyAyIDAgUgovSyBbNl0+PgplbmRvYmoKMzIgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVEQKL1AgMzEgMCBSCi9LIFszMyAwIFJdCi9BIFs8PC9PIC9UYWJsZQovSGVhZGVycyBbXT4+IDw8L08gL1RhYmxlCi9Sb3dTcGFuIDE+PiA8PC9PIC9UYWJsZQovQ29sU3BhbiAxPj5dPj4KZW5kb2JqCjM1IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL05vblN0cnVjdAovUCAzNCAwIFIKL1BnIDIgMCBSCi9LIFs3XT4+CmVuZG9iagozNCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCAzMSAwIFIKL0sgWzM1IDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKMzEgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgMjAgMCBSCi9LIFszMiAwIFIgMzQgMCBSXT4+CmVuZG9iagozOCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgMzcgMCBSCi9QZyAyIDAgUgovSyBbOF0+PgplbmRvYmoKMzcgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVEQKL1AgMzYgMCBSCi9LIFszOCAwIFJdCi9BIFs8PC9PIC9UYWJsZQovSGVhZGVycyBbXT4+IDw8L08gL1RhYmxlCi9Sb3dTcGFuIDE+PiA8PC9PIC9UYWJsZQovQ29sU3BhbiAxPj5dPj4KZW5kb2JqCjQwIDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL05vblN0cnVjdAovUCAzOSAwIFIKL1BnIDIgMCBSCi9LIFs5XT4+CmVuZG9iagozOSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCAzNiAwIFIKL0sgWzQwIDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKMzYgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgMjAgMCBSCi9LIFszNyAwIFIgMzkgMCBSXT4+CmVuZG9iago0MyAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgNDIgMCBSCi9QZyAyIDAgUgovSyBbMTBdPj4KZW5kb2JqCjQyIDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RECi9QIDQxIDAgUgovSyBbNDMgMCBSXQovQSBbPDwvTyAvVGFibGUKL0hlYWRlcnMgW10+PiA8PC9PIC9UYWJsZQovUm93U3BhbiAxPj4gPDwvTyAvVGFibGUKL0NvbFNwYW4gMT4+XT4+CmVuZG9iago0NSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgNDQgMCBSCi9QZyAyIDAgUgovSyBbMTFdPj4KZW5kb2JqCjQ0IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RECi9QIDQxIDAgUgovSyBbNDUgMCBSXQovQSBbPDwvTyAvVGFibGUKL0hlYWRlcnMgW10+PiA8PC9PIC9UYWJsZQovUm93U3BhbiAxPj4gPDwvTyAvVGFibGUKL0NvbFNwYW4gMT4+XT4+CmVuZG9iago0MSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9UUgovUCAyMCAwIFIKL0sgWzQyIDAgUiA0NCAwIFJdPj4KZW5kb2JqCjIwIDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RhYmxlCi9QIDE1IDAgUgovSyBbMjEgMCBSIDI2IDAgUiAzMSAwIFIgMzYgMCBSIDQxIDAgUl0+PgplbmRvYmoKNDcgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDQ2IDAgUgovUGcgMiAwIFIKL0sgWzEyXT4+CmVuZG9iago0NiAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9IMwovUCAxNSAwIFIKL0sgWzQ3IDAgUl0+PgplbmRvYmoKNTEgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDUwIDAgUgovUGcgMiAwIFIKL0sgWzEzXT4+CmVuZG9iago1MCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCA0OSAwIFIKL0sgWzUxIDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKNTMgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDUyIDAgUgovUGcgMiAwIFIKL0sgWzE0XT4+CmVuZG9iago1MiAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCA0OSAwIFIKL0sgWzUzIDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKNDkgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgNDggMCBSCi9LIFs1MCAwIFIgNTIgMCBSXT4+CmVuZG9iago1NiAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgNTUgMCBSCi9QZyAyIDAgUgovSyBbMTVdPj4KZW5kb2JqCjU1IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RECi9QIDU0IDAgUgovSyBbNTYgMCBSXQovQSBbPDwvTyAvVGFibGUKL0hlYWRlcnMgW10+PiA8PC9PIC9UYWJsZQovUm93U3BhbiAxPj4gPDwvTyAvVGFibGUKL0NvbFNwYW4gMT4+XT4+CmVuZG9iago1OCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgNTcgMCBSCi9QZyAyIDAgUgovSyBbMTZdPj4KZW5kb2JqCjU3IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RECi9QIDU0IDAgUgovSyBbNTggMCBSXQovQSBbPDwvTyAvVGFibGUKL0hlYWRlcnMgW10+PiA8PC9PIC9UYWJsZQovUm93U3BhbiAxPj4gPDwvTyAvVGFibGUKL0NvbFNwYW4gMT4+XT4+CmVuZG9iago1NCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9UUgovUCA0OCAwIFIKL0sgWzU1IDAgUiA1NyAwIFJdPj4KZW5kb2JqCjQ4IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RhYmxlCi9QIDE1IDAgUgovSyBbNDkgMCBSIDU0IDAgUl0+PgplbmRvYmoKNjAgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDU5IDAgUgovUGcgMiAwIFIKL0sgWzE3XT4+CmVuZG9iago1OSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9IMwovUCAxNSAwIFIKL0sgWzYwIDAgUl0+PgplbmRvYmoKNjQgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDYzIDAgUgovUGcgMiAwIFIKL0sgWzE4XT4+CmVuZG9iago2MyAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCA2MiAwIFIKL0sgWzY0IDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKNjYgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDY1IDAgUgovUGcgMiAwIFIKL0sgWzE5XT4+CmVuZG9iago2NSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCA2MiAwIFIKL0sgWzY2IDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKNjIgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgNjEgMCBSCi9LIFs2MyAwIFIgNjUgMCBSXT4+CmVuZG9iago2OSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgNjggMCBSCi9QZyAyIDAgUgovSyBbMjBdPj4KZW5kb2JqCjY4IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RECi9QIDY3IDAgUgovSyBbNjkgMCBSXQovQSBbPDwvTyAvVGFibGUKL0hlYWRlcnMgW10+PiA8PC9PIC9UYWJsZQovUm93U3BhbiAxPj4gPDwvTyAvVGFibGUKL0NvbFNwYW4gMT4+XT4+CmVuZG9iago3MSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgNzAgMCBSCi9QZyAyIDAgUgovSyBbMjFdPj4KZW5kb2JqCjcwIDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RECi9QIDY3IDAgUgovSyBbNzEgMCBSXQovQSBbPDwvTyAvVGFibGUKL0hlYWRlcnMgW10+PiA8PC9PIC9UYWJsZQovUm93U3BhbiAxPj4gPDwvTyAvVGFibGUKL0NvbFNwYW4gMT4+XT4+CmVuZG9iago2NyAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9UUgovUCA2MSAwIFIKL0sgWzY4IDAgUiA3MCAwIFJdPj4KZW5kb2JqCjYxIDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1RhYmxlCi9QIDE1IDAgUgovSyBbNjIgMCBSIDY3IDAgUl0+PgplbmRvYmoKNzMgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDcyIDAgUgovUGcgMiAwIFIKL0sgWzIyXT4+CmVuZG9iago3MiAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9IMwovUCAxNSAwIFIKL0sgWzczIDAgUl0+PgplbmRvYmoKNzcgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDc2IDAgUgovUGcgMiAwIFIKL0sgWzIzXT4+CmVuZG9iago3NiAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCA3NSAwIFIKL0sgWzc3IDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKNzkgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDc4IDAgUgovUGcgMiAwIFIKL0sgWzI0XT4+CmVuZG9iago3OCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9URAovUCA3NSAwIFIKL0sgWzc5IDAgUl0KL0EgWzw8L08gL1RhYmxlCi9IZWFkZXJzIFtdPj4gPDwvTyAvVGFibGUKL1Jvd1NwYW4gMT4+IDw8L08gL1RhYmxlCi9Db2xTcGFuIDE+Pl0+PgplbmRvYmoKNzUgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvVFIKL1AgNzQgMCBSCi9LIFs3NiAwIFIgNzggMCBSXT4+CmVuZG9iago3NCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9UYWJsZQovUCAxNSAwIFIKL0sgWzc1IDAgUl0+PgplbmRvYmoKODEgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDgwIDAgUgovUGcgMiAwIFIKL0sgWzI1XT4+CmVuZG9iago4MCAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9IMwovUCAxNSAwIFIKL0sgWzgxIDAgUl0+PgplbmRvYmoKODMgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvTm9uU3RydWN0Ci9QIDgyIDAgUgovUGcgMiAwIFIKL0sgWzI2XT4+CmVuZG9iago4MiAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9QCi9QIDE1IDAgUgovSyBbODMgMCBSXT4+CmVuZG9iago4NSAwIG9iago8PC9UeXBlIC9TdHJ1Y3RFbGVtCi9TIC9Ob25TdHJ1Y3QKL1AgODQgMCBSCi9QZyAyIDAgUgovSyBbMjddPj4KZW5kb2JqCjg0IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL1AKL1AgMTUgMCBSCi9LIFs4NSAwIFJdPj4KZW5kb2JqCjg3IDAgb2JqCjw8L1R5cGUgL1N0cnVjdEVsZW0KL1MgL05vblN0cnVjdAovUCA4NiAwIFIKL1BnIDIgMCBSCi9LIFsyOF0+PgplbmRvYmoKODYgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvUAovUCAxNSAwIFIKL0sgWzg3IDAgUl0+PgplbmRvYmoKMTUgMCBvYmoKPDwvVHlwZSAvU3RydWN0RWxlbQovUyAvRG9jdW1lbnQKL0xhbmcgKGVuLVVTKQovUCAxNCAwIFIKL0sgWzE2IDAgUiAxOCAwIFIgMjAgMCBSIDQ2IDAgUiA0OCAwIFIgNTkgMCBSIDYxIDAgUiA3MiAwIFIgNzQgMCBSIDgwIDAgUiA4MiAwIFIgODQgMCBSIDg2IDAgUl0+PgplbmRvYmoKODggMCBvYmoKWzE3IDAgUiAxOSAwIFIgMjMgMCBSIDI1IDAgUiAyOCAwIFIgMzAgMCBSIDMzIDAgUiAzNSAwIFIgMzggMCBSIDQwIDAgUiA0MyAwIFIgNDUgMCBSIDQ3IDAgUiA1MSAwIFIgNTMgMCBSIDU2IDAgUiA1OCAwIFIgNjAgMCBSIDY0IDAgUiA2NiAwIFIgNjkgMCBSIDcxIDAgUiA3MyAwIFIgNzcgMCBSIDc5IDAgUiA4MSAwIFIgODMgMCBSIDg1IDAgUiA4NyAwIFJdCmVuZG9iago4OSAwIG9iago8PC9UeXBlIC9QYXJlbnRUcmVlCi9OdW1z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IAowMDAwMDA0ODYxIDAwMDAwIG4gCjAwMDAwMDU2MTYgMDAwMDAgbiAKMDAwMDAwNTI0MSAwMDAwMCBuIAowMDAwMDA1MTYyIDAwMDAwIG4gCjAwMDAwMDU0NjggMDAwMDAgbiAKMDAwMDAwNTM4OSAwMDAwMCBuIAowMDAwMDA2MTQ0IDAwMDAwIG4gCjAwMDAwMDU3NjkgMDAwMDAgbiAKMDAwMDAwNTY5MCAwMDAwMCBuIAowMDAwMDA1OTk2IDAwMDAwIG4gCjAwMDAwMDU5MTcgMDAwMDAgbiAKMDAwMDAwNjY3MiAwMDAwMCBuIAowMDAwMDA2Mjk3IDAwMDAwIG4gCjAwMDAwMDYyMTggMDAwMDAgbiAKMDAwMDAwNjUyNCAwMDAwMCBuIAowMDAwMDA2NDQ1IDAwMDAwIG4gCjAwMDAwMDcyMDIgMDAwMDAgbiAKMDAwMDAwNjgyNiAwMDAwMCBuIAowMDAwMDA2NzQ2IDAwMDAwIG4gCjAwMDAwMDcwNTQgMDAwMDAgbiAKMDAwMDAwNjk3NCAwMDAwMCBuIAowMDAwMDA3NDU0IDAwMDAwIG4gCjAwMDAwMDczNzQgMDAwMDAgbiAKMDAwMDAwODU4MSAwMDAwMCBuIAowMDAwMDA3OTc3IDAwMDAwIG4gCjAwMDAwMDc2MDEgMDAwMDAgbiAKMDAwMDAwNzUyMSAwMDAwMCBuIAowMDAwMDA3ODI5IDAwMDAwIG4gCjAwMDAwMDc3NDkgMDAwMDAgbiAKMDAwMDAwODUwNyAwMDAwMCBuIAowMDAwMDA4MTMxIDAwMDAwIG4gCjAwMDAwMDgwNTEgMDAwMDAgbiAKMDAwMDAwODM1OSAwMDAwMCBuIAowMDAwMDA4Mjc5IDAwMDAwIG4gCjAwMDAwMDg3MzggMDAwMDAgbiAKMDAwMDAwODY1OCAwMDAwMCBuIAowMDAwMDA5ODY1IDAwMDAwIG4gCjAwMDAwMDkyNjEgMDAwMDAgbiAKMDAwMDAwODg4NSAwMDAwMCBuIAowMDAwMDA4ODA1IDAwMDAwIG4gCjAwMDAwMDkxMTMgMDAwMDAgbiAKMDAwMDAwOTAzMyAwMDAwMCBuIAowMDAwMDA5NzkxIDAwMDAwIG4gCjAwMDAwMDk0MTUgMDAwMDAgbiAKMDAwMDAwOTMzNSAwMDAwMCBuIAowMDAwMDA5NjQzIDAwMDAwIG4gCjAwMDAwMDk1NjMgMDAwMDAgbiAKMDAwMDAxMDAyMiAwMDAwMCBuIAowMDAwMDA5OTQyIDAwMDAwIG4gCjAwMDAwMTA2MTkgMDAwMDAgbiAKMDAwMDAxMDU0NSAwMDAwMCBuIAowMDAwMDEwMTY5IDAwMDAwIG4gCjAwMDAwMTAwODkgMDAwMDAgbiAKMDAwMDAxMDM5NyAwMDAwMCBuIAowMDAwMDEwMzE3IDAwMDAwIG4gCjAwMDAwMTA3NjkgMDAwMDAgbiAKMDAwMDAxMDY4OSAwMDAwMCBuIAowMDAwMDEwOTE2IDAwMDAwIG4gCjAwMDAwMTA4MzYgMDAwMDAgbiAKMDAwMDAxMTA2MiAwMDAwMCBuIAowMDAwMDEwOTgyIDAwMDAwIG4gCjAwMDAwMTEyMDggMDAwMDAgbiAKMDAwMDAxMTEyOCAwMDAwMCBuIAowMDAwMDExNDQ1IDAwMDAwIG4gCjAwMDAwMTE2NjYgMDAwMDAgbiAKMDAwMDAxMTgxMyAwMDAwMCBuIAowMDAwMDEyMDEyIDAwMDAwIG4gCjAwMDAwMjExMDcgMDAwMDAgbiAKMDAwMDAyMTM2MSAwMDAwMCBuIAowMDAwMDIyMDMwIDAwMDAwIG4gCjAwMDAwMjI2MDcgMDAwMDAgbiAKMDAwMDAzMjg4MCAwMDAwMCBuIAowMDAwMDMzMTI4IDAwMDAwIG4gCjAwMDAwMzM3NzMgMDAwMDAgbiAKMDAwMDAzNDM0NCAwMDAwMCBuIAowMDAwMDQwMTc0IDAwMDAwIG4gCjAwMDAwNDA0MjkgMDAwMDAgbiAKMDAwMDA0MDgyNSAwMDAwMCBuIAowMDAwMDQxMzU0IDAwMDAwIG4gCjAwMDAwNDUzMDUgMDAwMDAgbiAKMDAwMDA0NTU1NSAwMDAwMCBuIAowMDAwMDQ1ODE1IDAwMDAwIG4gCnRyYWlsZXIKPDwvU2l6ZSAxMDcKL1Jvb3QgOTAgMCBSCi9JbmZvIDEgMCBSPj4Kc3RhcnR4cmVmCjQ2MjkxCiUlRU9GCg=="
+          }
+        },
+        "head": [
+          37,
+          80,
+          68,
+          70
+        ]
+      }
+    },
+    {
+      "name": "download_report_unsigned",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": null
+      }
+    },
+    {
+      "name": "sign_report_with_technician",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 11,
+            "inspection_id": 15,
+            "is_signed": true,
+            "signed_at": "2025-09-05T20:47:56.258Z",
+            "signed_by": 3,
+            "qr_token": "706de4611b9de7d28471af2d8e0636c0",
+            "sent_at": null,
+            "created_at": "2025-09-05T20:40:26.814Z",
+            "updated_at": "2025-09-05T20:47:56.258Z",
+            "unsigned_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/unsigned.pdf",
+            "signed_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/signed.pdf"
+          },
+          "message": "Rapor başarıyla imzalandı"
+        }
+      }
+    },
+    {
+      "name": "verify_signed_path",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 11,
+            "inspection_id": 15,
+            "is_signed": true,
+            "signed_at": "2025-09-05T20:47:56.258Z",
+            "signed_by": 3,
+            "qr_token": "706de4611b9de7d28471af2d8e0636c0",
+            "sent_at": null,
+            "created_at": "2025-09-05T20:40:26.814Z",
+            "updated_at": "2025-09-05T20:47:56.258Z",
+            "unsigned_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/unsigned.pdf",
+            "signed_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/signed.pdf",
+            "inspection_data": {
+              "test": "ok",
+              "muayene_yeri": "Saha A",
+              "muayene_tarihi": "2025-09-05",
+              "emniyet_sistemi": "Uygun"
+            },
+            "inspection_date": "2025-11-30T21:00:00.000Z",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "photo_urls": [
+              "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+              "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+            ],
+            "equipment_name": "Kule Vinc 1757104826",
+            "equipment_type": "vinc",
+            "template": {
+              "sections": [
+                {
+                  "id": "genel",
+                  "type": "key_value",
+                  "items": [
+                    {
+                      "name": "muayene_tarihi",
+                      "label": "Tarih",
+                      "required": true,
+                      "valueType": "date"
+                    },
+                    {
+                      "name": "muayene_yeri",
+                      "label": "Yer",
+                      "required": true,
+                      "valueType": "text"
+                    }
+                  ],
+                  "title": "Genel"
+                },
+                {
+                  "id": "guvenlik",
+                  "type": "checklist",
+                  "title": "Güvenlik",
+                  "questions": [
+                    {
+                      "name": "emniyet_sistemi",
+                      "label": "Emniyet",
+                      "options": [
+                        "Uygun",
+                        "Uygun Değil"
+                      ],
+                      "required": true,
+                      "passValues": [
+                        "Uygun"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "id": "fotolar",
+                  "type": "photos",
+                  "field": "genel_gorunum",
+                  "title": "Fotoğraflar",
+                  "display": "grid",
+                  "maxCount": 6
+                }
+              ]
+            },
+            "technician_name": "Firma",
+            "technician_surname": "Admin",
+            "work_order_number": "WO-826752081",
+            "customer_name": "Test Musteri 1757104826",
+            "company_name": "ABC Mühendislik A.Ş.",
+            "logo_url": null
+          }
+        },
+        "signed_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/signed.pdf",
+        "is_signed": true
+      }
+    },
+    {
+      "name": "download_report_signed",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": null
+      }
+    },
+    {
+      "name": "public_qr",
+      "success": true,
+      "status": 200,
+      "message": null,
+      "data": {
+        "response": {
+          "success": true,
+          "data": {
+            "id": 11,
+            "inspection_id": 15,
+            "is_signed": true,
+            "signed_at": "2025-09-05T20:47:56.258Z",
+            "signed_by": 3,
+            "qr_token": "706de4611b9de7d28471af2d8e0636c0",
+            "sent_at": null,
+            "created_at": "2025-09-05T20:40:26.814Z",
+            "updated_at": "2025-09-05T20:47:56.258Z",
+            "unsigned_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/unsigned.pdf",
+            "signed_pdf_path": "/home/damn/Desktop/muayene/backend/uploads/reports/11/signed.pdf",
+            "inspection_data": {
+              "test": "ok",
+              "muayene_yeri": "Saha A",
+              "muayene_tarihi": "2025-09-05",
+              "emniyet_sistemi": "Uygun"
+            },
+            "inspection_date": "2025-11-30T21:00:00.000Z",
+            "start_time": "09:00:00",
+            "end_time": "17:00:00",
+            "photo_urls": [
+              "/uploads/inspections/15/inspection_1757104826786_1n78oy.png",
+              "/uploads/inspections/15/inspection_1757105272475_r3q15g.png"
+            ],
+            "equipment_name": "Kule Vinc 1757104826",
+            "equipment_type": "vinc",
+            "technician_name": "Firma",
+            "technician_surname": "Admin",
+            "work_order_number": "WO-826752081",
+            "customer_name": "Test Musteri 1757104826",
+            "company_name": "ABC Mühendislik A.Ş.",
+            "company_contact": "+90 212 555 0123"
+          }
+        }
+      }
+    },
+    {
+      "name": "work_order_status_approved",
+      "success": false,
+      "status": 500,
+      "message": null,
+      "data": {
+        "response": {
+          "success": false,
+          "error": {
+            "code": "INTERNAL_SERVER_ERROR",
+            "message": "İş emri durumu güncellenirken bir hata oluştu"
+          }
+        }
+      }
+    },
+    {
+      "name": "work_order_status_sent",
+      "success": false,
+      "status": 500,
+      "message": null,
+      "data": {
+        "response": {
+          "success": false,
+          "error": {
+            "code": "INTERNAL_SERVER_ERROR",
+            "message": "İş emri durumu güncellenirken bir hata oluştu"
+          }
+        }
+      }
+    }
+  ]
+}

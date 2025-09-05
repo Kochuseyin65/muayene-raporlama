@@ -7,6 +7,7 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "migrate": "node utils/migrate.js",
+    "worker:reports": "node utils/reportWorker.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,11 +22,11 @@
     "express-rate-limit": "^8.0.1",
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
-    "html-pdf": "^3.0.1",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "puppeteer": "^23.11.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

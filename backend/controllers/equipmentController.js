@@ -436,34 +436,48 @@ const validateTemplate = (template) => {
     }
     
     for (const section of template.sections) {
-      if (!section.title || typeof section.title !== 'string') {
-        return false;
-      }
-      
-      if (!section.fields || !Array.isArray(section.fields)) {
-        return false;
-      }
-      
-      for (const field of section.fields) {
-        if (!field.name || typeof field.name !== 'string') {
-          return false;
+      if (!section.title || typeof section.title !== 'string') return false;
+
+      // Support both legacy and typed sections
+      if (section.type) {
+        const st = section.type;
+        const validSectionTypes = ['key_value', 'checklist', 'table', 'photos', 'notes'];
+        if (!validSectionTypes.includes(st)) return false;
+        if (st === 'key_value') {
+          if (!Array.isArray(section.items)) return false;
+          for (const it of section.items) {
+            if (!it.name || typeof it.name !== 'string') return false;
+            const vt = it.valueType || 'text';
+            const validV = ['text','number','date','select'];
+            if (!validV.includes(vt)) return false;
+            if (vt === 'select' && (!Array.isArray(it.options) || it.options.length === 0)) return false;
+          }
+        } else if (st === 'checklist') {
+          if (!Array.isArray(section.questions)) return false;
+          for (const q of section.questions) {
+            if (!q.name || !q.label) return false;
+            if (!Array.isArray(q.options) || q.options.length === 0) return false;
+          }
+        } else if (st === 'table') {
+          if (!Array.isArray(section.columns) || section.columns.length === 0) return false;
+          for (const c of section.columns) {
+            if (!c.name || !c.label) return false;
+          }
+        } else if (st === 'photos') {
+          if (!section.field || typeof section.field !== 'string') return false;
+        } else if (st === 'notes') {
+          if (!section.field || typeof section.field !== 'string') return false;
         }
-        
-        if (!field.type || typeof field.type !== 'string') {
-          return false;
-        }
-        
-        const validTypes = ['text', 'number', 'date', 'select', 'table', 'photo'];
-        if (!validTypes.includes(field.type)) {
-          return false;
-        }
-        
-        if (field.type === 'select' && (!field.options || !Array.isArray(field.options))) {
-          return false;
-        }
-        
-        if (field.type === 'table' && (!field.columns || !Array.isArray(field.columns))) {
-          return false;
+      } else {
+        // Legacy format with fields[]
+        if (!section.fields || !Array.isArray(section.fields)) return false;
+        for (const field of section.fields) {
+          if (!field.name || typeof field.name !== 'string') return false;
+          if (!field.type || typeof field.type !== 'string') return false;
+          const validTypes = ['text', 'number', 'date', 'select', 'table', 'photo'];
+          if (!validTypes.includes(field.type)) return false;
+          if (field.type === 'select' && (!field.options || !Array.isArray(field.options))) return false;
+          if (field.type === 'table' && (!field.columns || !Array.isArray(field.columns))) return false;
         }
       }
     }

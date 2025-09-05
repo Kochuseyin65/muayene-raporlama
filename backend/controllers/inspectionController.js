@@ -137,6 +137,42 @@ const getInspections = async (req, res) => {
   }
 };
 
+const approveInspection = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+
+    const inspectionCheck = await pool.query(
+      `SELECT i.*, wo.company_id
+       FROM inspections i
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       WHERE i.id = $1`,
+      [id]
+    );
+
+    if (inspectionCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Muayene bulunamadı' } });
+    }
+    const inspection = inspectionCheck.rows[0];
+    if (inspection.company_id !== companyId) {
+      return res.status(403).json({ success: false, error: { code: 'PERMISSION_DENIED', message: 'Bu muayeneye erişim yetkiniz yok' } });
+    }
+    if (inspection.status !== 'completed') {
+      return res.status(409).json({ success: false, error: { code: 'CONFLICT', message: 'Sadece tamamlanmış muayeneler onaylanabilir' } });
+    }
+
+    const result = await pool.query(
+      `UPDATE inspections SET status = 'approved' WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    return res.json({ success: true, data: result.rows[0], message: 'Muayene onaylandı' });
+  } catch (error) {
+    console.error('Approve inspection error:', error);
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Muayene onaylanırken bir hata oluştu' } });
+  }
+};
+
 const getInspection = async (req, res) => {
   try {
     const { id } = req.params;
@@ -147,7 +183,7 @@ const getInspection = async (req, res) => {
               t.name as technician_name, t.surname as technician_surname,
               wo.work_order_number, wo.scheduled_date as work_order_scheduled_date,
               cc.name as customer_name, cc.email as customer_email,
-              r.id as report_id, r.unsigned_pdf_base64, r.signed_pdf_base64, 
+              r.id as report_id, r.unsigned_pdf_path, r.signed_pdf_path, 
               r.is_signed, r.signed_at, r.qr_token
        FROM inspections i
        JOIN equipment e ON i.equipment_id = e.id
@@ -366,7 +402,13 @@ const saveInspection = async (req, res) => {
       // Update existing report
       reportResult = await pool.query(
         `UPDATE reports 
-         SET qr_token = $1, updated_at = CURRENT_TIMESTAMP
+         SET qr_token = $1,
+             unsigned_pdf_path = NULL,
+             signed_pdf_path = NULL,
+             is_signed = false,
+             signed_at = NULL,
+             signed_by = NULL,
+             updated_at = CURRENT_TIMESTAMP
          WHERE inspection_id = $2
          RETURNING *`,
         [qrToken, id]
@@ -482,7 +524,54 @@ const completeInspection = async (req, res) => {
        RETURNING *`,
       [id]
     );
+
+    // Invalidate any previously generated PDFs/signatures for this inspection's report
+    await pool.query(
+      `UPDATE reports 
+       SET unsigned_pdf_path = NULL,
+           signed_pdf_path = NULL,
+           is_signed = false,
+           signed_at = NULL,
+           signed_by = NULL,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE inspection_id = $1`,
+      [id]
+    );
     
+    // Auto-generate unsigned PDF after completion (file-based)
+    try {
+      const reportData = await pool.query(
+        `SELECT r.id as report_id, r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
+                e.name as equipment_name, e.type as equipment_type, e.template,
+                t.name as technician_name, t.surname as technician_surname,
+                wo.work_order_number, cc.name as customer_name,
+                comp.name as company_name, comp.logo_url
+         FROM reports r
+         JOIN inspections i ON r.inspection_id = i.id
+         JOIN equipment e ON i.equipment_id = e.id
+         JOIN technicians t ON i.technician_id = t.id
+         JOIN work_orders wo ON i.work_order_id = wo.id
+         JOIN customer_companies cc ON wo.customer_company_id = cc.id
+         JOIN companies comp ON wo.company_id = comp.id
+         WHERE r.inspection_id = $1`,
+        [id]
+      );
+      if (reportData.rows.length > 0) {
+        const reportRow = reportData.rows[0];
+        const { generateReportHTML } = require('./reportController');
+        const { generatePDFBufferFromHTML } = require('../utils/pdfGenerator');
+        const { unsignedPdfPath, writeFileAtomic } = require('../utils/storage');
+        const html = generateReportHTML(reportRow);
+        const buf = await generatePDFBufferFromHTML(html);
+        const out = unsignedPdfPath(reportRow.id);
+        await writeFileAtomic(out, buf);
+        await pool.query('UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [out, reportRow.id]);
+      }
+    } catch (e) {
+      // Swallow PDF generation errors to not block completion
+      console.error('Auto-generate PDF after completion failed:', e);
+    }
+
     res.json({
       success: true,
       data: result.rows[0],
@@ -560,12 +649,28 @@ const uploadInspectionPhotos = async (req, res) => {
     const existingPhotos = inspection.photo_urls || [];
     const allPhotos = [...existingPhotos, ...photoUrls];
     
+    // Optionally map uploaded photos to a specific template field
+    let updatedInspectionData = inspection.inspection_data || {};
+    const bodyFieldName = req.body?.fieldName || req.body?.fieldNames;
+    if (bodyFieldName) {
+      const fieldNames = Array.isArray(bodyFieldName) ? bodyFieldName : photoUrls.map(() => bodyFieldName);
+      fieldNames.forEach((fname, idx) => {
+        if (typeof fname === 'string' && fname.trim()) {
+          const url = photoUrls[idx] || photoUrls[photoUrls.length - 1];
+          if (!Array.isArray(updatedInspectionData[fname])) {
+            updatedInspectionData[fname] = [];
+          }
+          updatedInspectionData[fname].push(url);
+        }
+      });
+    }
+
     const result = await pool.query(
       `UPDATE inspections 
-       SET photo_urls = $1
-       WHERE id = $2
+       SET photo_urls = $1, inspection_data = $2
+       WHERE id = $3
        RETURNING *`,
-      [JSON.stringify(allPhotos), id]
+      [JSON.stringify(allPhotos), JSON.stringify(updatedInspectionData), id]
     );
     
     res.json({
@@ -804,9 +909,20 @@ const createInspection = async (req, res) => {
       [workOrderId, equipmentId, technicianId, inspectionDate, startTime, endTime, '{}']
     );
 
+    const inspection = result.rows[0];
+
+    // Ensure a report row exists for this inspection with a QR token
+    const qrToken = require('crypto').randomBytes(16).toString('hex');
+    await pool.query(
+      `INSERT INTO reports (inspection_id, qr_token)
+       VALUES ($1, $2)
+       ON CONFLICT (inspection_id) DO UPDATE SET qr_token = EXCLUDED.qr_token, updated_at = CURRENT_TIMESTAMP`,
+      [inspection.id, qrToken]
+    );
+
     res.status(201).json({
       success: true,
-      data: result.rows[0],
+      data: inspection,
       message: 'Muayene başarıyla oluşturuldu'
     });
 
@@ -856,6 +972,7 @@ module.exports = {
   updateInspection,
   saveInspection,
   completeInspection,
+  approveInspection,
   uploadInspectionPhotos,
   checkTimeSlotAvailability,
   createInspectionValidation,

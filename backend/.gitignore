@@ -1,9 +1,7 @@
 node_modules/
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+
+# allow committing env files per request
+# (not ignoring .env and variants)
 
 logs/
 *.log
@@ -13,6 +11,7 @@ npm-debug.log*
 .vscode/
 .idea/
 
+# do not commit runtime uploads
 uploads/
 dist/
 build/
