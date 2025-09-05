@@ -71,12 +71,18 @@ REPORTS_PATH=./uploads/reports
 Önkoşullar
 - Node.js 18+, npm 8+
 - PostgreSQL 13+
-- Linux için Puppeteer bağımlılıkları (Ubuntu/Debian):
+ - Linux için Puppeteer bağımlılıkları (Ubuntu/Debian):
   ```bash
   sudo apt-get update && sudo apt-get install -y \
     libnss3 libatk-bridge2.0-0 libxkbcommon0 libgtk-3-0 \
     libasound2 libgbm1 libpango-1.0-0 libxshmfence1 fonts-liberation
   ```
+ - Linux için Puppeteer bağımlılıkları (Arch Linux):
+   ```bash
+   sudo pacman -Syu --needed \
+     nss atk at-spi2-core libxkbcommon gtk3 \
+     alsa-lib libgbm pango libxshmfence ttf-liberation
+   ```
 
 Adımlar
 ```bash
@@ -161,4 +167,3 @@ Bu proje özel kullanım içindir.
 
 Hazır URL’ler
 - Backend API: http://localhost:3000/api
-
