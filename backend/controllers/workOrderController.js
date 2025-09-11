@@ -7,6 +7,12 @@ const generateWorkOrderNumber = () => {
   return `WO-${timestamp}${random}`;
 };
 
+const generateInspectionNumber = () => {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `INSP-${timestamp}${random}`;
+};
+
 const getWorkOrders = async (req, res) => {
   try {
     const companyId = req.user.company_id;
@@ -308,8 +314,8 @@ const createWorkOrder = async (req, res) => {
         
         for (const equipmentId of equipmentIds) {
           await client.query(
-            `INSERT INTO inspections (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            `INSERT INTO inspections (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data, inspection_number) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
             [
               workOrder.id, 
               equipmentId, 
@@ -317,7 +323,8 @@ const createWorkOrder = async (req, res) => {
               scheduledDate || new Date(),
               '09:00',
               '17:00',
-              JSON.stringify({})
+              JSON.stringify({}),
+              generateInspectionNumber()
             ]
           );
         }

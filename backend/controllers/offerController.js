@@ -12,6 +12,12 @@ const generateTrackingToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
+const generateInspectionNumber = () => {
+  const timestamp = Date.now().toString().slice(-6);
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `INSP-${timestamp}${random}`;
+};
+
 const getOffers = async (req, res) => {
   try {
     const companyId = req.user.company_id;
@@ -689,8 +695,8 @@ const convertToWorkOrder = async (req, res) => {
         for (let i = 0; i < item.quantity; i++) {
           const freeDate = await findFreeDate(createdBy, scheduledDate);
           await client.query(
-            `INSERT INTO inspections (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            `INSERT INTO inspections (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data, inspection_number) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
             [
               workOrder.id, 
               item.equipmentId, 
@@ -698,7 +704,8 @@ const convertToWorkOrder = async (req, res) => {
               freeDate,
               '09:00', // Default start time
               '17:00', // Default end time
-              JSON.stringify({}) // Empty inspection data initially
+              JSON.stringify({}), // Empty inspection data initially
+              generateInspectionNumber()
             ]
           );
         }

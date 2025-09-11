@@ -7,7 +7,10 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(helmet());
+// Helmet with relaxed cross-origin resource policy to allow images from API on different origin (dev: 5173)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 app.use(cors());
 app.use(morgan('combined'));
 

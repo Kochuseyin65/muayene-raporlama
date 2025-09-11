@@ -901,12 +901,18 @@ const createInspection = async (req, res) => {
     }
 
     // Create inspection
+    const generateInspectionNumber = () => {
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `INSP-${timestamp}${random}`;
+    };
+
     const result = await pool.query(
       `INSERT INTO inspections 
-       (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       (work_order_id, equipment_id, technician_id, inspection_date, start_time, end_time, inspection_data, inspection_number) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
        RETURNING *`,
-      [workOrderId, equipmentId, technicianId, inspectionDate, startTime, endTime, '{}']
+      [workOrderId, equipmentId, technicianId, inspectionDate, startTime, endTime, '{}', generateInspectionNumber()]
     );
 
     const inspection = result.rows[0];

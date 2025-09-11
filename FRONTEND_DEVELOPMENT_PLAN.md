@@ -121,6 +121,192 @@ frontend/
     - Tema ve temel layout component'lerini (Sidebar, Header) oluşturma.
     - Login sayfası ve auth akışını tamamlama.
     - Protected Route (yetkisiz erişimi engelleyen) yapısını kurma.
+    - PermissionGuard + `usePermission` ile izinli aksiyonları UI’da koşullu gösterme.
+
+2.  **Faz 2: Ana CRUD Modülleri**
+    - Genel `DataTable` component'ini oluşturma (sıralama, filtreleme, sayfalama).
+    - Global toast/hata deseni (notistack) ve 401/403/409/422 için ortak handler.
+    - Müşteri firma (Customer Companies) yönetimi sayfası (CRUD).
+    - Ekipman (Equipment) listeleme sayfası (CRUD, ileride template edit).
+    - Teknisyen (Technicians) yönetimi sayfası (CRUD).
+
+3.  **Faz 3: İş Akışı Modülleri**
+    - Teklif oluşturma ve listeleme.
+    - İş emri oluşturma ve listeleme.
+    - Tekliften iş emri oluşturma akışı.
+    - Detay sayfaları (OfferDetail, WorkOrderDetail).
+
+4.  **Faz 4: Muayene ve Raporlama**
+    - Dinamik muayene formu (`DynamicInspectionForm`) component'ini geliştirme.
+    - Muayene verilerini kaydetme ve güncelleme.
+    - Rapor görüntüleme sayfası (PDF viewer entegrasyonu).
+    - Rapor prepare + prepare-async (job polling: pending/processing/completed/failed durum göstergeleri).
+    - E-imza akışının entegrasyonu.
+
+5.  **Faz 5: Tamamlama ve İyileştirme**
+    - Dashboard sayfalarını rol bazlı oluşturma.
+    - Mobil uyumluluk testleri ve iyileştirmeleri.
+    - Performans optimizasyonları (code splitting, memoization).
+    - Kapsamlı testler.
+
+### 7.11.1. Kabul Kriterleri (Özet)
+- Faz 1
+  - Login `POST /auth/login` → token saklanır, `GET /auth/profile` sonrası ProtectedRoute çalışır.
+  - PermissionGuard ile izin verilmeyen butonlar/aksiyonlar gizlenir (backend 403 yine kontrol eder).
+- Faz 2
+  - DataTable: sayfalama/filtre/sıralama; RTK Query tag invalidation çalışır.
+  - Global toast/hata: 401→logout, 403→uyarı, 409/422→form alanı altı + toast.
+  - Customers/Equipment/Technicians CRUD sayfaları tamam ve tutarlı UI deseni kullanır.
+- Faz 3
+  - Offers CRUD + approve/send/convert-to-work-order; durum rozetleri; WO oluşumu doğrulanır.
+  - Work Orders liste/detay; assign ve status güncellemeleri.
+- Faz 4
+  - Inspections list/detail; DynamicInspectionForm şablondan alan render eder; photos upload/preview; save/complete çalışır.
+  - Reports prepare/prepare-async: job polling ile durum göstergesi; indirme/önizleme.
+  - E-imza: signing-data → local signer → sign; signed.pdf indirilir/gösterilir.
+- Faz 5
+  - Dashboard kartları (açık teklifler, yaklaşan iş emirleri, bekleyen imza/raporlar).
+  - Public sayfalar: `/offers/track/:token` ve `/reports/public/:qrToken` erişilebilir ve doğru veri gösterir.
+  - Performans (code splitting) ve mobil uyum iyileştirmeleri.
+
+## 7. Netleştirilmiş Plan (CODEBASE_REPORT Doğrulandı)
+
+Bu bölüm, FRONTEND_DEVELOPMENT_PLAN.md ve to-start-project.md içeriğini CODEBASE_REPORT.md ile doğrulayarak netleştirir. Çakışan yerlerde CODEBASE_REPORT.md esas alınmıştır.
+
+### 7.1. Varsayımlar ve Karar Noktaları
+- Stack: React 18 + Vite, React Router v6, Redux Toolkit + RTK Query, Axios.
+- .env: `VITE_API_BASE_URL=http://localhost:3000/api` (geliştirmede backend varsayılanı).
+- Yetki: UI’da izinli aksiyonları göster, asıl kontrol backend’dedir (granüler permission’lar).
+- Karar noktaları (onay bekliyor):
+  - UI kütüphanesi: MUI (tercih) vs Tailwind (alternatif).
+  - Dil: TypeScript kullanılacak mı? (Tercihen evet; yoksa JS ile ilerlenebilir.)
+
+### 7.2. Endpoint Eşleme (CODEBASE_REPORT’a göre)
+- Auth: `POST /api/auth/login`, `GET /api/auth/profile`.
+- Offers → Work Order: `POST /api/offers/:id/convert-to-work-order`.
+- Inspections uygunluk: `GET /api/inspections/check-availability`.
+- Reports indirme: `GET /api/reports/:id/download?signed=false|true`.
+- Public report: `GET /api/reports/public/:qrToken`.
+
+Not: to-start-project.md içinde bazı kısa/alternatif path’ler geçebilir; yukarıdaki yollar kesin ve günceldir.
+
+### 7.3. Rotalar
+- Public
+  - `/login` — Giriş
+  - `/offers/track/:token` — Teklif takip (public)
+  - `/reports/public/:qrToken` — İmzalı rapor görüntüleme (public)
+  - `/404`
+- Protected
+  - `/dashboard`
+  - `/profile`
+  - `/admin/companies` (Super Admin)
+  - `/technicians`
+  - `/customers`
+  - `/equipment`
+  - `/offers`
+  - `/work-orders`
+  - `/inspections`
+  - `/reports`
+  - `/settings/company`
+
+### 7.4. Çekirdek Uygulama Yapısı
+- Layout: `AppLayout` (Sidebar + Header), `ProtectedRoute`, `PermissionGuard`.
+- Store: `authSlice` (user, token), `uiSlice` (tema/sidebar), `baseApi` (RTK Query).
+- Hooks: `useAuth`, `usePermission(permission: string)`.
+- Constants: `PERMISSIONS` (CODEBASE_REPORT listesini temel alın).
+
+### 7.5. Modül Bazlı Plan ve İzinler
+- Auth
+  - `POST /auth/login`, `GET /auth/profile`, ayrıca `GET /companies/profile` (kullanıcının firması).
+- Companies (Super Admin odaklı)
+  - `GET /companies` (superAdmin), `GET /companies/:id` (companyAdmin|superAdmin),
+    `POST /companies` (superAdmin), `PUT /companies/:id` (companyAdmin), `DELETE /companies/:id` (superAdmin).
+- Customer Companies
+  - Liste/Detay: `GET /customer-companies[/:id]` (viewCustomers)
+  - Oluştur: `POST /customer-companies` (createCustomer)
+  - Güncelle: `PUT /customer-companies/:id` (editCustomer)
+  - Sil: `DELETE /customer-companies/:id` (any(companyAdmin, editCustomer))
+- Equipment
+  - `GET /equipment`, `/equipment/:id`, `/equipment/types` (viewEquipment)
+  - `POST /equipment` (createEquipment)
+  - `PUT /equipment/:id`, `PUT /equipment/:id/template` (editEquipment)
+  - `DELETE /equipment/:id` (any(companyAdmin, editEquipment))
+- Offers
+  - CRUD: `GET/POST/PUT/DELETE /offers` (viewOffers/createOffer/editOffer/…)
+  - Aksiyonlar: `POST /offers/:id/approve` (approveOffer), `POST /offers/:id/send` (sendOffer),
+    `POST /offers/:id/convert-to-work-order` (createWorkOrder)
+  - Public takip: `GET /offers/track/:token`
+- Work Orders
+  - CRUD: `GET/POST/PUT/DELETE /work-orders` (viewWorkOrders/createWorkOrder/editWorkOrder/…)
+  - Atama: `PUT /work-orders/:id/assign` (assignWorkOrder)
+  - Durum: `PUT /work-orders/:id/status` (updateWorkOrderStatus)
+- Inspections
+  - Liste/Detay: `GET /inspections`, `/inspections/:id` (viewInspections)
+  - Oluştur: `POST /inspections` (createWorkOrder)
+  - Güncelle: `PUT /inspections/:id` (editInspection)
+  - Kaydet: `POST /inspections/:id/save` (saveInspection)
+  - Tamamla: `POST /inspections/:id/complete` (completeInspection)
+  - Onay: `POST /inspections/:id/approve` (companyAdmin)
+  - Foto: `POST /inspections/:id/photos` (uploadPhotos)
+  - Uygunluk: `GET /inspections/check-availability` (viewInspections)
+- Reports
+  - `GET /reports/:id` (viewReports)
+  - `POST /reports/:id/prepare`, `POST /reports/:id/prepare-async`, `GET /reports/jobs/:jobId` (viewReports)
+  - `GET /reports/:id/signing-data`, `POST /reports/:id/sign` (signReports)
+  - `GET /reports/:id/download?signed=false|true` (downloadReports)
+  - `GET /reports/public/:qrToken` (public)
+
+### 7.6. Uploads ve Medya
+- Muayene foto gösterimi: `GET /uploads/inspections/:inspectionId/:filename` (public servis, UI’da link gösterimini kısıtlayın).
+- Logo: `GET /uploads/logos/:filename` (public).
+- Güvenlik: Public URL’ler için UI tarafında yalnızca erişimi beklenen öğeleri listeleyin; asıl güvenlik backend’de.
+
+### 7.7. Yeniden Kullanılabilir Bileşenler
+- DataTable (sıralama, filtre, sayfalama)
+- Form bileşenleri (Input, Select, DateTime, Number)
+- DynamicInspectionForm (equipment.template → sections/fields)
+- PhotoUploader (multi, progress, preview)
+- PdfViewer (blob/embed, indirme fallback)
+- ConfirmDialog, Toast/Notifications
+- PermissionGuard, ProtectedRoute
+- SearchBar, PaginationControls
+- StatusBadge (offer/workOrder/inspection/report durumları)
+
+### 7.8. RTK Query API Katmanı
+- `baseApi`: `fetchBaseQuery({ baseUrl: import.meta.env.VITE_API_BASE_URL, prepareHeaders })`
+- Tag’ler: `Companies`, `Customers`, `Equipment`, `Technicians`, `Offers`, `WorkOrders`, `Inspections`, `Reports`
+- API slice’ları:
+  - `authApi`: login, profile
+  - `companiesApi`: list/get/create/update/delete, profile
+  - `customersApi`: CRUD
+  - `equipmentApi`: list/get/types, create/update/template/delete
+  - `techniciansApi`: CRUD, permissions, password
+  - `offersApi`: CRUD, approve, send, convert, track
+  - `workOrdersApi`: CRUD, assign, status
+  - `inspectionsApi`: list/get/create/update/save/complete/approve, check-availability, photos
+  - `reportsApi`: get, prepare, prepare-async, jobStatus, signing-data, sign, download (download’u normal fetch ile dosya indirme)
+
+### 7.9. Durum ve Hata Yönetimi
+- 401: token temizle, `/login`’a yönlendir, toast.
+- 403: sayfa içi “izin yok” mesajı ve alternatifler.
+- 409/422: form alanı altı hata + toast; uygunluk için alternatif saat öner.
+- Optimistic update: yalnızca güvenli PATCH/POST’larda; aksi halde bekle ve doğrula.
+
+### 7.10. Sayfa Bazlı Minimum İçerik
+- Dashboard: açık teklifler, yaklaşan iş emirleri, bekleyen imza/raporlar.
+- Offers List/Detail: approve/send/convert aksiyonları, durum rozetleri.
+- Work Orders List/Detail: atama paneli, durum değişimi, ilişkili muayeneler.
+- Inspections Detail/Edit: DynamicInspectionForm, PhotoUploader, Save/Complete, uygunluk kontrolü.
+- Reports Detail: Prepare/Prepare-Async (progress/polling), SigningData → local signer (signer.md), Sign, Download, Public link.
+
+### 7.11. Önceliklendirilmiş Sprint Planı
+1.  **Faz 1: Temel Kurulum ve Kimlik Doğrulama**
+    - Proje iskeletini oluşturma (Vite).
+    - Kütüphaneleri kurma (MUI, Redux, Router).
+    - Klasör yapısını oluşturma.
+    - Tema ve temel layout component'lerini (Sidebar, Header) oluşturma.
+    - Login sayfası ve auth akışını tamamlama.
+    - Protected Route (yetkisiz erişimi engelleyen) yapısını kurma.
 
 2.  **Faz 2: Ana CRUD Modülleri**
     - Teknisyen yönetimi sayfası.

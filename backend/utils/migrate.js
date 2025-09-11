@@ -7,9 +7,25 @@ async function runMigrations() {
     console.log('Starting database migration...');
     
     const migrationsDir = path.join(__dirname, '../config/migrations');
-    const migrationFiles = fs.readdirSync(migrationsDir)
+    let migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
       .sort();
+
+    // Allow running a subset: via CLI arg or env
+    // Usage examples:
+    //  node utils/migrate.js 007              -> runs files that include '007'
+    //  node utils/migrate.js from=007         -> runs files >= '007'
+    //  MIGRATE_ONLY=007_add_x.sql npm run migrate
+    //  MIGRATE_FROM=007 npm run migrate
+    const args = process.argv.slice(2);
+    const onlyArg = process.env.MIGRATE_ONLY || (args.find(a => !a.includes('=')) || '');
+    const fromArg = process.env.MIGRATE_FROM || (args.find(a => a.startsWith('from='))?.split('=')[1] || '');
+
+    if (onlyArg) {
+      migrationFiles = migrationFiles.filter(f => f.includes(onlyArg));
+    } else if (fromArg) {
+      migrationFiles = migrationFiles.filter(f => f >= fromArg);
+    }
     
     for (const file of migrationFiles) {
       console.log(`Running migration: ${file}`);
