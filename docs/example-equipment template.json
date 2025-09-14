@@ -1,0 +1,153 @@
+{
+  "sections": [
+    {
+      "type": "key_value",
+      "items": [
+        {
+          "name": "imalatci",
+          "label": "İmalatçı",
+          "valueType": "text"
+        },
+        {
+          "name": "model",
+          "label": "Model",
+          "valueType": "text"
+        },
+        {
+          "name": "seri_no",
+          "label": "Seri No",
+          "valueType": "text"
+        },
+        {
+          "name": "uretim_tarihi",
+          "label": "Üretim Tarihi",
+          "valueType": "date"
+        },
+        {
+          "name": "calisma_ortami",
+          "label": "Çalışma Ortamı",
+          "options": [
+            {
+              "label": "İç Mekan",
+              "value": "ic"
+            },
+            {
+              "label": "Dış Mekan",
+              "value": "dis"
+            }
+          ],
+          "valueType": "select"
+        },
+        {
+          "name": "azami_kapasite_ton",
+          "label": "Azami Kapasite (ton)",
+          "valueType": "number"
+        }
+      ],
+      "title": "Genel Bilgiler"
+    },
+    {
+      "type": "checklist",
+      "title": "Güvenlik Kontrolleri",
+      "questions": [
+        {
+          "name": "emniyet_switch",
+          "label": "Emniyet Switch",
+          "options": [
+            "Uygun",
+            "Uygun Değil",
+            "N/A"
+          ]
+        },
+        {
+          "name": "limit_switch",
+          "label": "Limit Switch",
+          "options": [
+            "Uygun",
+            "Uygun Değil",
+            "N/A"
+          ]
+        },
+        {
+          "name": "halat_durumu",
+          "label": "Halat Durumu",
+          "options": [
+            "Uygun",
+            "Uygun Değil",
+            "N/A"
+          ]
+        },
+        {
+          "name": "kanca_durumu",
+          "label": "Kanca Durumu",
+          "options": [
+            "Uygun",
+            "Uygun Değil",
+            "N/A"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "key_value",
+      "items": [
+        {
+          "name": "maksimum_yukseklik_m",
+          "label": "Maksimum Yükseklik (m)",
+          "valueType": "number"
+        },
+        {
+          "name": "bom_uzunlugu_m",
+          "label": "Bom Uzunluğu (m)",
+          "valueType": "number"
+        },
+        {
+          "name": "kullanim_amaci",
+          "label": "Kullanım Amacı",
+          "valueType": "text"
+        },
+        {
+          "name": "son_bakim_tarihi",
+          "label": "Son Bakım Tarihi",
+          "valueType": "date"
+        }
+      ],
+      "title": "Teknik Değerler"
+    },
+    {
+      "type": "table",
+      "field": "bakim_kayitlari",
+      "title": "Bakım / Servis Kayıtları",
+      "columns": [
+        {
+          "name": "tarih",
+          "label": "Tarih"
+        },
+        {
+          "name": "islem",
+          "label": "İşlem"
+        },
+        {
+          "name": "teknisyen",
+          "label": "Teknisyen"
+        },
+        {
+          "name": "not",
+          "label": "Not"
+        }
+      ]
+    },
+    {
+      "type": "photos",
+      "field": "genel_gorunum",
+      "title": "Fotoğraflar",
+      "display": "grid",
+      "maxCount": 12
+    },
+    {
+      "type": "notes",
+      "field": "ek_notlar",
+      "title": "Ek Notlar"
+    }
+  ]
+}

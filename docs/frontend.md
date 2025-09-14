@@ -45,6 +45,7 @@ frontend/
 
 ## 4. Modül Özeti
 - Customers, Equipment, Technicians: CRUD listeleri, arama/sayfalama, dialog formlar, izinli aksiyonlar
+- Equipment: görsel Template Builder ile şablon düzenleme (JSON’suz)
 - Offers: liste/detay, approve/send/convert, durum rozetleri
 - Work Orders: liste/detay, assign/status, inspections özetleri
 - Inspections:
@@ -61,6 +62,18 @@ frontend/
 - photos → inspection_data[field] grid; upload için Photos sayfasına yönlendirir
 - notes → Textarea
 - Saat normalizasyonu: `HH:MM:SS` → `HH:MM`; regex doğrulaması `HH:MM` (backend ile uyum)
+
+### 5.1 Template Builder (Equipment)
+- Amaç: Son kullanıcının JSON yazmadan ekipman şablonu oluşturabilmesi.
+- Bölüm tipleri: key_value, checklist, table, photos, notes.
+- Ürettiği şema InspectionFormPage ile birebir uyumlu:
+  - key_value → items[name,label,valueType(=text|number|date|select), options?, required?]
+  - checklist → questions[name,label,options]
+  - table → field, columns[name,label,type]
+  - photos → field, maxCount?
+  - notes → field
+- Nerede: Equipment listesinde satırdaki “Şablon” butonu; ayrıca “Yeni Ekipman” dialogunda açılabilir.
+- Kod: `frontend/src/features/equipment/TemplateBuilderDialog.tsx`
 
 ## 6. RTK Query
 - `baseApi`: baseUrl + `prepareHeaders` ile JWT ekleme, 401 → logout

@@ -41,6 +41,7 @@ Bu belge, repodaki tüm dosya ve klasörlerin amacını ve bağlamını açıkla
 - `src/features/*` — Modül dizinleri
   - `auth/` — LoginPage, authApi
   - `customers/`, `equipment/`, `technicians/` — CRUD sayfaları ve slice’ları
+    - `equipment/TemplateBuilderDialog.tsx` — Ekipman şablonu için görsel düzenleyici
   - `offers/` — OffersPage, OfferDetailPage, offersApi
   - `workOrders/` — WorkOrdersPage, WorkOrderDetailPage, workOrdersApi
   - `inspections/` — InspectionsPage, InspectionDetailPage, InspectionForm/Photos/ReportPage, TableFieldEditor, inspectionsApi

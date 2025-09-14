@@ -5,6 +5,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DataTable from '@/components/common/DataTable'
 import { useListEquipmentQuery, useGetEquipmentTypesQuery, useCreateEquipmentMutation, useUpdateEquipmentMutation, useUpdateTemplateMutation, useDeleteEquipmentMutation, type Equipment } from './equipmentApi'
+import TemplateBuilderDialog from './TemplateBuilderDialog'
 import PermissionGuard from '@/components/auth/PermissionGuard'
 import { useToast } from '@/hooks/useToast'
 import PageHeader from '@/components/layout/PageHeader'
@@ -113,9 +114,14 @@ export default function EquipmentPage() {
         }} />
       )}
       {templateDialog && (
-        <TemplateDialog open={!!templateDialog} equipment={templateDialog} onClose={() => setTemplateDialog(null)} onSave={async (template) => {
-          try { await updateTemplate({ id: templateDialog!.id, template }).unwrap() } catch (e: any) { error(e?.data?.error?.message || 'Şablon güncelleme başarısız') }
-        }} />
+        <TemplateBuilderDialog
+          open={!!templateDialog}
+          equipment={templateDialog}
+          onClose={() => setTemplateDialog(null)}
+          onSave={async (template) => {
+            try { await updateTemplate({ id: templateDialog!.id, template }).unwrap() } catch (e: any) { error(e?.data?.error?.message || 'Şablon güncelleme başarısız') }
+          }}
+        />
       )}
     </Box>
   )
@@ -125,6 +131,7 @@ function EquipmentDialog({ open, onClose, onSave, equipment }: { open: boolean; 
   const [name, setName] = useState(equipment?.name || '')
   const [type, setType] = useState(equipment?.type || '')
   const [templateText, setTemplateText] = useState(JSON.stringify(equipment?.template || { sections: [] }, null, 2))
+  const [builderOpen, setBuilderOpen] = useState(false)
 
   const submit = () => {
     try {
@@ -143,6 +150,10 @@ function EquipmentDialog({ open, onClose, onSave, equipment }: { open: boolean; 
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField label="Ad" value={name} onChange={(e) => setName(e.target.value)} required />
           <TextField label="Tür" value={type} onChange={(e) => setType(e.target.value)} required />
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+            <Button variant="outlined" onClick={() => setBuilderOpen(true)}>Görsel Şablon Düzenleyici</Button>
+            <Box sx={{ flex: 1 }} />
+          </Stack>
           <TextField label="Şablon (JSON)" value={templateText} onChange={(e) => setTemplateText(e.target.value)} multiline minRows={10} />
         </Stack>
       </DialogContent>
@@ -150,6 +161,15 @@ function EquipmentDialog({ open, onClose, onSave, equipment }: { open: boolean; 
         <Button onClick={onClose}>İptal</Button>
         <Button onClick={submit} variant="contained">Kaydet</Button>
       </DialogActions>
+
+      {builderOpen && (
+        <TemplateBuilderDialog
+          open={builderOpen}
+          onClose={() => setBuilderOpen(false)}
+          equipment={{ id: 0, name: name || 'Yeni', type: type || 'generic', template: (() => { try { return JSON.parse(templateText) } catch { return { sections: [] } } })() }}
+          onSave={(tpl) => { setTemplateText(JSON.stringify(tpl, null, 2)); setBuilderOpen(false) }}
+        />
+      )}
     </Dialog>
   )
 }
