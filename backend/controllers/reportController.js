@@ -1,4 +1,6 @@
 const { body, validationResult } = require('express-validator');
+const fs = require('fs');
+const fsp = fs.promises;
 const pool = require('../config/database');
 const crypto = require('crypto');
 const { generatePDFFromHTML: generatePDFFromHTMLPuppeteer, generatePDFBufferFromHTML } = require('../utils/pdfGenerator');
@@ -10,6 +12,9 @@ const {
   fileExists,
   readFileBase64,
 } = require('../utils/storage');
+
+// Büyük dosyalarda RAM'e komple almadan base64 onarımını atlamak için eşik (varsayılan 30MB)
+const MAX_BASE64_REPAIR_BYTES = parseInt(process.env.PDF_BASE64_REPAIR_MAX_BYTES || '31457280', 10);
 
 // Legacy base64 alanları kaldırıldı; normalize/backfill artık kullanılmıyor
 
@@ -103,9 +108,10 @@ const downloadReport = async (req, res) => {
     if ((!finalPath || !(await fileExists(finalPath))) && !wantSigned) {
       // İmzasız PDF yoksa canlı üret ve diske yaz
       const html = generateReportHTML(report);
-      const genB64 = await generatePDFFromHTML(html);
+      // Generate as Buffer to avoid any base64 encoding issues
+      const buf = await generatePDFBufferFromHTML(html);
       const out = unsignedPdfPath(report.id);
-      await writeFileAtomic(out, Buffer.from(genB64, 'base64'));
+      await writeFileAtomic(out, buf);
       await pool.query('UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [out, id]);
       finalPath = out;
     }
@@ -113,10 +119,64 @@ const downloadReport = async (req, res) => {
     if (!finalPath || !(await fileExists(finalPath))) {
       return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'PDF rapor bulunamadı' } });
     }
+    // Validate that the file is a real PDF. If not, attempt to repair/regenerate.
+    const ensureValidPdf = async (filePath, canRegen, htmlForRegen) => {
+      try {
+        const fd = await fsp.open(filePath, 'r');
+        try {
+          const { buffer, bytesRead } = await fd.read(Buffer.alloc(5), 0, 5, 0);
+          if (bytesRead === 5 && buffer.toString('ascii') === '%PDF-') {
+            return true;
+          }
+        } finally {
+          await fd.close();
+        }
+        // If file likely contains base64 of a PDF, decode and overwrite (only for reasonably small files)
+        const stat = await fsp.stat(filePath).catch(() => null);
+        const withinRepairLimit = !!(stat && stat.size <= MAX_BASE64_REPAIR_BYTES);
+        if (withinRepairLimit) {
+          const content = await fsp.readFile(filePath, 'utf8').catch(() => null);
+          if (content && /^[A-Za-z0-9+/=\r\n]+$/.test(content)) {
+            try {
+              const decoded = Buffer.from(content.replace(/\s+/g, ''), 'base64');
+              if (decoded.length > 0 && decoded.slice(0, 5).toString('ascii') === '%PDF-') {
+                await writeFileAtomic(filePath, decoded);
+                return true;
+              }
+            } catch (_) {}
+          }
+        }
+        // As a last resort, regenerate if permitted (unsigned PDFs)
+        if (canRegen && htmlForRegen) {
+          try {
+            const regenBuf = await generatePDFBufferFromHTML(htmlForRegen);
+            await writeFileAtomic(filePath, regenBuf);
+            return true;
+          } catch (_) {}
+        }
+        return false;
+      } catch (_) {
+        return false;
+      }
+    };
 
-    const filename = `${report.equipment_name}_${report.work_order_number}_${report.inspection_date}.pdf`;
+    const canRegen = !wantSigned; // we can only regenerate unsigned PDFs
+    if (!(await ensureValidPdf(finalPath, canRegen, canRegen ? generateReportHTML(report) : null))) {
+      return res.status(500).json({ success: false, error: { code: 'INVALID_PDF', message: 'PDF dosyası geçersiz veya bozuk görünüyor' } });
+    }
+
+    const rawFilename = `${report.equipment_name}_${report.work_order_number}_${report.inspection_date}.pdf`;
+    const buildContentDisposition = (name) => {
+      const safeAscii = String(name)
+        .replace(/[\r\n]/g, ' ')
+        .replace(/["]+/g, '')
+        .replace(/[^A-Za-z0-9._-]+/g, '_')
+        .slice(0, 150) || 'rapor.pdf';
+      const encoded = encodeURIComponent(String(name));
+      return `attachment; filename="${safeAscii}"; filename*=UTF-8''${encoded}`;
+    };
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', buildContentDisposition(rawFilename));
     return res.sendFile(path.resolve(finalPath));
     
   } catch (error) {

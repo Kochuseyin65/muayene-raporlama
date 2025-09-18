@@ -18,7 +18,7 @@ Bu belge, raporların yerel imzalayıcı (signer) ile imzalanması akışını a
 
 ## 4. Akış
 1) Rapor ekranında (InspectionReportPage) kullanıcı `İmzala` der.
-2) Backend’ten `pdfBase64` alınır.
+2) Backend’ten `pdfBase64` alınır. Not: Backend indirme akışında ise Buffer bazlı yazım ve PDF doğrulaması kullanılır; imza akışında ise base64 içerik döner.
 3) Yerel signer’a PIN ve base64 gönderilir; imzalı base64 alınır.
 4) Backend’e `POST /sign` ile imzalı base64 gönderilir; signed.pdf path’i güncellenir.
 5) İmza sonrası indirme ve public görüntüleme aktifleşir.

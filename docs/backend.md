@@ -69,9 +69,17 @@ Request → Router → Auth (JWT) → Permission → Controller → DB / Storage
 
 ## 5. PDF Üretim Hattı
 - `utils/reportRenderer.js` şablon + inspection_data + foto’ları HTML’e dönüştürür (typed & legacy).
-- `utils/pdfGenerator.js` Puppeteer ile HTML→PDF.
-- `utils/storage.js` rapor dosya yollarını üretir ve dosyayı yazar.
+- `utils/pdfGenerator.js` Puppeteer ile HTML→PDF. Tercihen Buffer döndürülür (`generatePDFBufferFromHTML`). Tek bir Puppeteer instance'ı yeniden kullanılır (singleton) ve sayfalar iş bitince kapatılır.
+- `controllers/reportController.downloadReport()` senaryosu:
+  - İstenen (signed/unsigned) dosya yolu yoksa, HTML’den PDF Buffer üretilir ve `writeFileAtomic` ile yazılır.
+  - İndirme öncesi dosyanın ilk baytları kontrol edilir: `%PDF-` değilse; base64 içerikse decode edilip düzeltilir; unsigned için gerekirse yeniden üretilir.
+  - Content-Disposition başlığı RFC 5987’e uygun ve güvenli olacak şekilde oluşturulur (ASCII fallback + `filename*` UTF‑8).
+- `utils/storage.js` rapor dosya yollarını üretir ve atomik yazımı yapar.
 - İmzalı/İmzasız dosyalar: `REPORTS_PATH/<report_id>/unsigned.pdf|signed.pdf`.
+
+### 5.1 Performans ve Bellek İyileştirmeleri
+- Puppeteer Yeniden Kullanımı: Her çağrıda yeni browser açmak yerine tek bir browser instance paylaşılarak sayfa bazlı (page) kullanım yapılır. Bu, hem CPU hem RAM tüketimini ve ilk bayt gecikmesini düşürür.
+- PDF Doğrulama Onarımı Eşiği: Bozuk dosya onarımında (base64→binary) dosya boyutu `PDF_BASE64_REPAIR_MAX_BYTES` (varsayılan 30MB) üzerindeyse RAM’e almaktan kaçınılır; unsigned ise doğrudan yeniden üretim denenir.
 
 ## 6. Güvenlik
 - JWT, permission kontrolleri, rate-limit (dev’de kapalı tutulabilir), helmet, CORS.

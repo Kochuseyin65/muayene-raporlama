@@ -5,16 +5,32 @@ const getLaunchOptions = () => {
   const headless = process.env.PUPPETEER_HEADLESS !== 'false';
   const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH; // optional for custom Chrome
   const args = [];
+  console.log('starting');
   if (noSandbox) {
+    console.log('yes bithc!');
     args.push('--no-sandbox', '--disable-setuid-sandbox');
   }
   return { headless, executablePath, args };
 };
 
+let browserPromise = null;
+async function getBrowser() {
+  if (browserPromise) {
+    try {
+      const b = await browserPromise;
+      if (b && b.isConnected()) return b;
+    } catch (_) {
+      // fallthrough to relaunch
+    }
+  }
+  browserPromise = puppeteer.launch(getLaunchOptions());
+  return browserPromise;
+}
+
 async function generatePDFBufferFromHTML(html) {
-  const browser = await puppeteer.launch(getLaunchOptions());
+  const browser = await getBrowser();
+  const page = await browser.newPage();
   try {
-    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -23,7 +39,7 @@ async function generatePDFBufferFromHTML(html) {
     });
     return pdfBuffer;
   } finally {
-    await browser.close();
+    try { await page.close(); } catch (_) {}
   }
 }
 
@@ -32,4 +48,17 @@ async function generatePDFFromHTML(html) {
   return buf.toString('base64');
 }
 
-module.exports = { generatePDFFromHTML, generatePDFBufferFromHTML };
+async function closeBrowser() {
+  try {
+    if (browserPromise) {
+      const b = await browserPromise; browserPromise = null; await b.close();
+    }
+  } catch (_) {}
+}
+
+const _graceful = () => { closeBrowser().catch(()=>{}); };
+process.on('SIGINT', _graceful);
+process.on('SIGTERM', _graceful);
+process.on('exit', _graceful);
+
+module.exports = { generatePDFFromHTML, generatePDFBufferFromHTML, closeBrowser };

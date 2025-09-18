@@ -10,4 +10,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  // Allow access over the machine's public IP
+  server: {
+    host: true, // listen on 0.0.0.0
+    port: 5173,
+  },
+  preview: {
+    host: true,
+    port: 5173,
+  },
 })

@@ -11,7 +11,25 @@ const app = express();
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
-app.use(cors());
+// CORS origins from env (comma-separated), fallback to defaults
+const defaultCorsOrigins = [
+  'http://213.142.151.93:5174', // Frontend public adresi
+  'http://localhost:5174'       // Lokal geliştirme için
+];
+const allowedCorsOrigins = (process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : defaultCorsOrigins).map(o => o.trim()).filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser or same-origin requests with no Origin header
+    if (!origin) return callback(null, true);
+    if (allowedCorsOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(morgan('combined'));
 
 const authLimiter = rateLimit({
@@ -89,8 +107,9 @@ app.use('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Allowed CORS origins:', allowedCorsOrigins);
 });
 
 module.exports = app;
