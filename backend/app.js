@@ -13,8 +13,10 @@ app.use(helmet({
 }));
 // CORS origins from env (comma-separated), fallback to defaults
 const defaultCorsOrigins = [
-  'http://213.142.151.93:5174', // Frontend public adresi
-  'http://localhost:5174'       // Lokal geliştirme için
+  'http://213.142.151.93:5174', // Frontend public (5174)
+  'http://213.142.151.93:5173', // Frontend public (5173)
+  'http://localhost:5174',      // Lokal geliştirme (5174)
+  'http://localhost:5173'       // Lokal geliştirme varsayılan Vite portu
 ];
 const allowedCorsOrigins = (process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')

@@ -1,6 +1,6 @@
 require('dotenv').config();
 const pool = require('../config/database');
-const { generateReportHTML } = require('../controllers/reportController');
+const { generateReportHTML, attachReportQrCode } = require('../controllers/reportController');
 const { generatePDFBufferFromHTML } = require('./pdfGenerator');
 const { unsignedPdfPath, writeFileAtomic } = require('./storage');
 
@@ -49,6 +49,7 @@ async function processJob(job) {
     throw new Error('Report not found for job');
   }
   const report = res.rows[0];
+  await attachReportQrCode(report);
   const html = generateReportHTML(report);
   const buf = await generatePDFBufferFromHTML(html);
   const out = unsignedPdfPath(report.id);

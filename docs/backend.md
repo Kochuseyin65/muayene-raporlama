@@ -72,6 +72,7 @@ Request → Router → Auth (JWT) → Permission → Controller → DB / Storage
 - `utils/pdfGenerator.js` Puppeteer ile HTML→PDF. Tercihen Buffer döndürülür (`generatePDFBufferFromHTML`). Tek bir Puppeteer instance'ı yeniden kullanılır (singleton) ve sayfalar iş bitince kapatılır.
 - `controllers/reportController.downloadReport()` senaryosu:
   - İstenen (signed/unsigned) dosya yolu yoksa, HTML’den PDF Buffer üretilir ve `writeFileAtomic` ile yazılır.
+  - `resolvePdfPath` imzalı dosyayı öncelikli olarak seçer; yoksa otomatik imzasız PDF’e düşer ve gerekirse yeniden üretir.
   - İndirme öncesi dosyanın ilk baytları kontrol edilir: `%PDF-` değilse; base64 içerikse decode edilip düzeltilir; unsigned için gerekirse yeniden üretilir.
   - Content-Disposition başlığı RFC 5987’e uygun ve güvenli olacak şekilde oluşturulur (ASCII fallback + `filename*` UTF‑8).
 - `utils/storage.js` rapor dosya yollarını üretir ve atomik yazımı yapar.
@@ -84,10 +85,10 @@ Request → Router → Auth (JWT) → Permission → Controller → DB / Storage
 ## 6. Güvenlik
 - JWT, permission kontrolleri, rate-limit (dev’de kapalı tutulabilir), helmet, CORS.
 - Upload servisinde path traversal korumaları, Content-Type seçimi, uzun cache kontrolü.
-- Public uçlar: teklif tracking (accept/decline), rapor public (imzalı gerektirir).
+- Public uçlar: teklif tracking (accept/decline), rapor public (metadata + PDF indirme; imzalı yoksa otomatik imzasız PDF servis edilir).
 
 ## 7. Çalıştırma ve Geliştirme
-- .env: DB_*, JWT_SECRET, REPORTS_PATH, PUPPETEER_*.
+- .env: DB_*, JWT_SECRET, REPORTS_PATH, PUPPETEER_*, REPORT_PUBLIC_BASE_URL (`http://host/reports/public` taban adresi; QR kodu bu URL ile üretir).
 - `npm run migrate` (veya `MIGRATE_ONLY=007` gibi seçimli).
 - `npm run dev` → API `http://localhost:3000/api`.
 - Worker: `node utils/reportWorker.js` (async prepare için).

@@ -22,6 +22,7 @@ import InspectionDetailPage from '@/features/inspections/InspectionDetailPage'
 import InspectionFormPage from '@/features/inspections/InspectionFormPage'
 import InspectionPhotosPage from '@/features/inspections/InspectionPhotosPage'
 import InspectionReportPage from '@/features/inspections/InspectionReportPage'
+import ReportPublicPage from '@/features/reports/ReportPublicPage'
 
 function ThemedApp() {
   const mode = useSelector((s: RootState) => s.ui.theme)
@@ -34,6 +35,7 @@ function ThemedApp() {
         <AuthInitializer />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reports/public/:token" element={<ReportPublicPage />} />
           <Route element={<ProtectedRoute />}> 
             <Route
               path="/"

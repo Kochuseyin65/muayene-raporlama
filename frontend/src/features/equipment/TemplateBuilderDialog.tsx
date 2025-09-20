@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box,
   Button,
@@ -45,6 +45,27 @@ const VALUE_TYPES = [
   { value: 'select', label: 'Seçim' },
 ]
 
+const SCALE_OPTIONS = [
+  { value: 'small', label: 'Küçük (sıkıştırılmış)' },
+  { value: 'medium', label: 'Orta (varsayılan)' },
+  { value: 'large', label: 'Büyük (ferah)' },
+]
+
+const DEFAULT_TEMPLATE_SETTINGS = {
+  reportStyle: {
+    scale: 'medium',
+  },
+}
+
+const mergeSettings = (settings?: any) => ({
+  reportStyle: {
+    ...DEFAULT_TEMPLATE_SETTINGS.reportStyle,
+    ...(settings?.reportStyle || {}),
+  },
+})
+
+const cloneSections = (list?: any[]) => JSON.parse(JSON.stringify(Array.isArray(list) ? list : []))
+
 function slugify(s: string) {
   return (s || '')
     .toLowerCase()
@@ -56,9 +77,32 @@ function slugify(s: string) {
 }
 
 export default function TemplateBuilderDialog({ open, onClose, onSave, equipment }: { open: boolean; onClose: () => void; onSave: (template: any) => void; equipment: Equipment }) {
-  const initial = useMemo(() => ({ sections: Array.isArray(equipment?.template?.sections) ? equipment.template.sections : [] }), [equipment])
-  const [sections, setSections] = useState<any[]>(initial.sections)
+  const initial = useMemo(() => {
+    const template = equipment?.template || {}
+    return {
+      sections: Array.isArray(template?.sections) ? template.sections : [],
+      settings: mergeSettings(template?.settings),
+    }
+  }, [equipment])
+
+  const [sections, setSections] = useState<any[]>(cloneSections(initial.sections))
+  const [settings, setSettings] = useState<any>(initial.settings)
   const [showRequired, setShowRequired] = useState(true)
+
+  useEffect(() => {
+    if (!open) return
+    setSections(cloneSections(initial.sections))
+    setSettings(mergeSettings(initial.settings))
+  }, [open, equipment?.id])
+
+  const handleScaleChange = (value: string) => {
+    setSettings((prev: any) => ({
+      reportStyle: {
+        ...mergeSettings(prev).reportStyle,
+        scale: value,
+      },
+    }))
+  }
 
   const addSection = () => {
     setSections((arr) => ([...arr, { type: 'key_value', title: 'Yeni Bölüm', items: [] }]))
@@ -83,7 +127,7 @@ export default function TemplateBuilderDialog({ open, onClose, onSave, equipment
   const updateSec = (idx: number, patch: any) => setSections((arr) => arr.map((s, i) => (i === idx ? { ...s, ...patch } : s)))
 
   const handleSave = () => {
-    const template = { sections }
+    const template = { settings: mergeSettings(settings), sections }
     onSave(template)
   }
 
@@ -92,6 +136,26 @@ export default function TemplateBuilderDialog({ open, onClose, onSave, equipment
       <DialogTitle>Şablon Düzenle</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Rapor Tasarım Seçenekleri</Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+              <FormControl sx={{ minWidth: 220 }}>
+                <InputLabel>Yazı Boyutu ve Boşluk</InputLabel>
+                <Select
+                  label="Yazı Boyutu ve Boşluk"
+                  value={mergeSettings(settings).reportStyle.scale}
+                  onChange={(e) => handleScaleChange(String(e.target.value))}
+                >
+                  {SCALE_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                Seçilen ölçek bu ekipman şablonu ile oluşturulan raporların yazı tipi, margin ve padding değerlerini otomatik olarak düzenler.
+              </Typography>
+            </Stack>
+          </Paper>
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
             <Button variant="outlined" onClick={addSection}>Bölüm Ekle</Button>
             <FormControlLabel control={<Switch checked={showRequired} onChange={(e)=> setShowRequired(e.target.checked)} />} label="Zorunlu alan anahtarını göster" />
@@ -323,4 +387,3 @@ function OptionsEditor({ value, onChange }: { value: any[]; onChange: (v: any[])
     </Stack>
   )
 }
-

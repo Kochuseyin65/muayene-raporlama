@@ -11,11 +11,16 @@ Bu belge, uygulamada rapor şablonlarının HTML’e dönüştürülmesi ve sonr
   - Şablon + muayene verilerini HTML’e dönüştürür.
   - Modern (typed) ve legacy şablonları destekler.
   - XSS’e karşı tüm alanları escape eder; tablo, rozet, fotoğraf ızgarası gibi temel stilleri uygular.
+  - Rapor alt bilgisinde QR kodu çizer: `report.qr_code_data_url` doluysa görsel olarak QR’ı basar, yanında public doğrulama URL’sini gösterir; yoksa eski token metnine döner.
 
 - `backend/utils/pdfGenerator.js`
   - Puppeteer ile HTML’den PDF üretir.
   - `generatePDFBufferFromHTML(html)`: Buffer döndürür (tercih edilen yol).
   - `generatePDFFromHTML(html)`: Base64 döndürür (e‑imza akışında gerekir).
+
+- `qrcode` kütüphanesi
+  - `REPORT_PUBLIC_BASE_URL` ortam değişkeni ile oluşturulan public rapor URL’sini QR koduna dönüştürür (`attachReportQrCode`).
+  - Worker ve eşzamanlı download akışlarında rapor nesnesine `qr_code_data_url` ve `qr_public_url` alanları eklenir.
 
 - `backend/utils/storage.js`
   - Yollar: `REPORTS_PATH/<report_id>/unsigned.pdf` ve `.../signed.pdf`.
@@ -35,6 +40,7 @@ Bu belge, uygulamada rapor şablonlarının HTML’e dönüştürülmesi ve sonr
   - Typed şablon türleri: `key_value`, `checklist`, `table`, `photos`, `notes`.
   - Legacy destek: `sections[].fields` yapısı algılanırsa `renderLegacy` işletilir.
   - Çıktı: Tam HTML dokümanı (`<!DOCTYPE html> ...`) — base CSS dâhil.
+  - QR blok: alt bilgi bölümünde veri URI olarak gelen QR görselini (veya fallback token metnini) çizip doğrulama linkini sunar.
 
 ## PDF Üretimi (Puppeteer)
 - `generatePDFBufferFromHTML(html)`
@@ -88,6 +94,7 @@ Bu belge, uygulamada rapor şablonlarının HTML’e dönüştürülmesi ve sonr
 ## Ortam Değişkenleri
 - `REPORTS_PATH`: Rapor dosyalarının kök dizini (varsayılan: `backend/uploads/reports`).
 - `PUPPETEER_NO_SANDBOX`, `PUPPETEER_HEADLESS`, `PUPPETEER_EXECUTABLE_PATH`: Puppeteer davranışını kontrol eder.
+- `REPORT_PUBLIC_BASE_URL`: Public rapor doğrulama sayfasının tam adresi (örn. `https://app.example.com/reports/public`). QR kodlar bu URL + `/:qrToken` formatını kullanır.
 
 ## Sık Karşılaşılan Sorunlar ve Çözümler
 - “Invalid character in header content [Content-Disposition]”

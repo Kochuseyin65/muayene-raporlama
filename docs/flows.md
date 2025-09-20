@@ -46,4 +46,4 @@ Teklif (offers) → İş Emri (work_orders) → Muayene (inspections) → Rapor 
 
 ## 10. Public Akışlar
 - Teklif tracking: görüntüleme, kabul/ret
-- Rapor public: yalnızca imzalı rapor görüntülenebilir
+- Rapor public: `/reports/public/:qrToken` metadata + inline önizleme sağlar. PDF indirmede imzalı dosya önceliklidir; yoksa imzasız versiyona otomatik düşer. PDF alt bilgisindeki QR kodu aynı public route'a yönlendirir.

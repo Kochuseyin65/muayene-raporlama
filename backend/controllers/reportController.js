@@ -5,6 +5,7 @@ const pool = require('../config/database');
 const crypto = require('crypto');
 const { generatePDFFromHTML: generatePDFFromHTMLPuppeteer, generatePDFBufferFromHTML } = require('../utils/pdfGenerator');
 const path = require('path');
+const QRCode = require('qrcode');
 const {
   unsignedPdfPath,
   signedPdfPath,
@@ -15,8 +16,67 @@ const {
 
 // Büyük dosyalarda RAM'e komple almadan base64 onarımını atlamak için eşik (varsayılan 30MB)
 const MAX_BASE64_REPAIR_BYTES = parseInt(process.env.PDF_BASE64_REPAIR_MAX_BYTES || '31457280', 10);
+const ALLOWED_REPORT_SCALES = ['small', 'medium', 'large'];
+const REPORT_PUBLIC_BASE_URL = process.env.REPORT_PUBLIC_BASE_URL || 'http://localhost:5173/reports/public';
 
 // Legacy base64 alanları kaldırıldı; normalize/backfill artık kullanılmıyor
+
+const regenerateUnsignedPdf = async (report, htmlCache) => {
+  const html = htmlCache || generateReportHTML(report);
+  const buf = await generatePDFBufferFromHTML(html);
+  const out = unsignedPdfPath(report.id);
+  await writeFileAtomic(out, buf);
+  await pool.query('UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [out, report.id]);
+  return { path: out, html };
+};
+
+const buildPublicReportUrl = (qrToken) => {
+  if (!qrToken) return null;
+  const base = REPORT_PUBLIC_BASE_URL.endsWith('/') ? REPORT_PUBLIC_BASE_URL.slice(0, -1) : REPORT_PUBLIC_BASE_URL;
+  return `${base}/${qrToken}`;
+};
+
+const attachReportQrCode = async (report) => {
+  if (!report) return report;
+  const publicUrl = buildPublicReportUrl(report.qr_token);
+  report.qr_public_url = publicUrl;
+  if (!publicUrl) {
+    report.qr_code_data_url = null;
+    return report;
+  }
+  try {
+    const dataUrl = await QRCode.toDataURL(publicUrl, { margin: 0, scale: 4 });
+    report.qr_code_data_url = dataUrl;
+  } catch (err) {
+    console.error('QR code generation failed:', err);
+    report.qr_code_data_url = null;
+  }
+  return report;
+};
+
+const resolvePdfPath = async (report, preferSigned, htmlCache = null) => {
+  const attempts = [];
+  if (preferSigned) {
+    attempts.push({ key: 'signed_pdf_path', signed: true });
+  }
+  attempts.push({ key: 'unsigned_pdf_path', signed: false });
+
+  for (const attempt of attempts) {
+    const currentPath = report[attempt.key];
+    if (currentPath && await fileExists(currentPath)) {
+      return { path: currentPath, signed: attempt.signed, html: htmlCache };
+    }
+  }
+
+  const unsignedAttempt = attempts.find(a => a.signed === false);
+  if (unsignedAttempt) {
+    const { path, html } = await regenerateUnsignedPdf(report, htmlCache);
+    report.unsigned_pdf_path = path;
+    return { path, signed: false, html };
+  }
+
+  return { path: null, signed: null, html: htmlCache };
+};
 
 const getReport = async (req, res) => {
   try {
@@ -102,19 +162,10 @@ const downloadReport = async (req, res) => {
     }
     
     const report = result.rows[0];
-    const wantSigned = signed === 'true';
+    await attachReportQrCode(report);
+    const preferSigned = signed === 'true';
 
-    let finalPath = wantSigned ? report.signed_pdf_path : report.unsigned_pdf_path;
-    if ((!finalPath || !(await fileExists(finalPath))) && !wantSigned) {
-      // İmzasız PDF yoksa canlı üret ve diske yaz
-      const html = generateReportHTML(report);
-      // Generate as Buffer to avoid any base64 encoding issues
-      const buf = await generatePDFBufferFromHTML(html);
-      const out = unsignedPdfPath(report.id);
-      await writeFileAtomic(out, buf);
-      await pool.query('UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [out, id]);
-      finalPath = out;
-    }
+    let { path: finalPath, signed: deliveredSigned, html: htmlCache } = await resolvePdfPath(report, preferSigned);
 
     if (!finalPath || !(await fileExists(finalPath))) {
       return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'PDF rapor bulunamadı' } });
@@ -160,12 +211,16 @@ const downloadReport = async (req, res) => {
       }
     };
 
-    const canRegen = !wantSigned; // we can only regenerate unsigned PDFs
-    if (!(await ensureValidPdf(finalPath, canRegen, canRegen ? generateReportHTML(report) : null))) {
+    const canRegen = deliveredSigned === false; // we can only regenerate unsigned PDFs
+    if (canRegen && !htmlCache) {
+      htmlCache = generateReportHTML(report);
+    }
+    if (!(await ensureValidPdf(finalPath, canRegen, canRegen ? htmlCache : null))) {
       return res.status(500).json({ success: false, error: { code: 'INVALID_PDF', message: 'PDF dosyası geçersiz veya bozuk görünüyor' } });
     }
 
-    const rawFilename = `${report.equipment_name}_${report.work_order_number}_${report.inspection_date}.pdf`;
+    const suffix = deliveredSigned ? '_signed' : '';
+    const rawFilename = `${report.equipment_name}_${report.work_order_number}_${report.inspection_date}${suffix}.pdf`;
     const buildContentDisposition = (name) => {
       const safeAscii = String(name)
         .replace(/[\r\n]/g, ' ')
@@ -378,10 +433,124 @@ const sendReport = async (req, res) => {
   }
 };
 
+const updateReportStyle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = req.user.company_id;
+    const { scale, reportStyle } = req.body || {};
+
+    if (scale === undefined && (reportStyle === undefined || reportStyle === null)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Güncellenecek bir rapor stili belirtiniz (ör. scale)'
+        }
+      });
+    }
+
+    const existing = await pool.query(
+      `SELECT r.id, COALESCE(r.report_style, '{}'::jsonb) AS report_style
+       FROM reports r
+       JOIN inspections i ON r.inspection_id = i.id
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       WHERE r.id = $1 AND wo.company_id = $2`,
+      [id, companyId]
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Rapor bulunamadı'
+        }
+      });
+    }
+
+    const currentStyle = existing.rows[0].report_style && typeof existing.rows[0].report_style === 'object'
+      ? existing.rows[0].report_style
+      : {};
+
+    let nextStyle = { ...currentStyle };
+
+    if (reportStyle && typeof reportStyle === 'object' && !Array.isArray(reportStyle)) {
+      nextStyle = { ...nextStyle, ...reportStyle };
+    }
+
+    if (scale !== undefined) {
+      if (typeof scale !== 'string') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'scale değeri metin olmalıdır'
+          }
+        });
+      }
+      nextStyle.scale = scale;
+    }
+
+    const resolvedScale = typeof nextStyle.scale === 'string'
+      ? nextStyle.scale.toLowerCase()
+      : undefined;
+
+    if (!resolvedScale) {
+      nextStyle.scale = 'medium';
+    } else if (!ALLOWED_REPORT_SCALES.includes(resolvedScale)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Geçersiz scale değeri. Kullanılabilir değerler: ${ALLOWED_REPORT_SCALES.join(', ')}`
+        }
+      });
+    } else {
+      nextStyle.scale = resolvedScale;
+    }
+
+    const updated = await pool.query(
+      `UPDATE reports
+       SET report_style = $1::jsonb,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, report_style`,
+      [JSON.stringify(nextStyle), id]
+    );
+
+    if (updated.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Rapor bulunamadı'
+        }
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        reportId: updated.rows[0].id,
+        reportStyle: updated.rows[0].report_style
+      }
+    });
+  } catch (error) {
+    console.error('Update report style error:', error);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Rapor stili güncellenirken bir hata oluştu'
+      }
+    });
+  }
+};
+
 const getPublicReport = async (req, res) => {
   try {
     const { qrToken } = req.params;
-    
+
     const result = await pool.query(
       `SELECT r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
               e.name as equipment_name, e.type as equipment_type,
@@ -395,7 +564,7 @@ const getPublicReport = async (req, res) => {
        JOIN work_orders wo ON i.work_order_id = wo.id
        JOIN customer_companies cc ON wo.customer_company_id = cc.id
        JOIN companies comp ON wo.company_id = comp.id
-       WHERE r.qr_token = $1 AND r.is_signed = true`,
+       WHERE r.qr_token = $1`,
       [qrToken]
     );
     
@@ -410,12 +579,13 @@ const getPublicReport = async (req, res) => {
     }
     
     const report = result.rows[0];
+    await attachReportQrCode(report);
     
     res.json({
       success: true,
       data: report
     });
-    
+
   } catch (error) {
     console.error('Get public report error:', error);
     res.status(500).json({
@@ -428,16 +598,129 @@ const getPublicReport = async (req, res) => {
   }
 };
 
+const downloadPublicReport = async (req, res) => {
+  try {
+    const { qrToken } = req.params;
+    const { signed = 'true' } = req.query;
+    const preferSigned = signed !== 'false';
+
+    const result = await pool.query(
+      `SELECT r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
+              e.name as equipment_name, e.type as equipment_type, e.template,
+              t.name as technician_name, t.surname as technician_surname,
+              wo.work_order_number, cc.name as customer_name,
+              comp.name as company_name, comp.logo_url
+       FROM reports r
+       JOIN inspections i ON r.inspection_id = i.id
+       JOIN equipment e ON i.equipment_id = e.id
+       JOIN technicians t ON i.technician_id = t.id
+       JOIN work_orders wo ON i.work_order_id = wo.id
+       JOIN customer_companies cc ON wo.customer_company_id = cc.id
+       JOIN companies comp ON wo.company_id = comp.id
+       WHERE r.qr_token = $1`,
+      [qrToken]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Rapor bulunamadı' } });
+    }
+
+    const report = result.rows[0];
+    await attachReportQrCode(report);
+    let { path: finalPath, signed: deliveredSigned, html: htmlCache } = await resolvePdfPath(report, preferSigned);
+
+    if (!finalPath || !(await fileExists(finalPath))) {
+      return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'PDF rapor bulunamadı' } });
+    }
+
+    const ensureValidPdf = async (filePath, canRegen, htmlForRegen) => {
+      try {
+        const fd = await fsp.open(filePath, 'r');
+        try {
+          const { buffer, bytesRead } = await fd.read(Buffer.alloc(5), 0, 5, 0);
+          if (bytesRead === 5 && buffer.toString('ascii') === '%PDF-') {
+            return true;
+          }
+        } finally {
+          await fd.close();
+        }
+        const stat = await fsp.stat(filePath).catch(() => null);
+        const withinRepairLimit = !!(stat && stat.size <= MAX_BASE64_REPAIR_BYTES);
+        if (withinRepairLimit) {
+          const content = await fsp.readFile(filePath, 'utf8').catch(() => null);
+          if (content && /^[A-Za-z0-9+/=\r\n]+$/.test(content)) {
+            try {
+              const decoded = Buffer.from(content.replace(/\s+/g, ''), 'base64');
+              if (decoded.length > 0 && decoded.slice(0, 5).toString('ascii') === '%PDF-') {
+                await writeFileAtomic(filePath, decoded);
+                return true;
+              }
+            } catch (_) {}
+          }
+        }
+        if (canRegen && htmlForRegen) {
+          try {
+            const regenBuf = await generatePDFBufferFromHTML(htmlForRegen);
+            await writeFileAtomic(filePath, regenBuf);
+            return true;
+          } catch (_) {}
+        }
+        return false;
+      } catch (_) {
+        return false;
+      }
+    };
+
+    const canRegen = deliveredSigned === false;
+    if (canRegen && !htmlCache) {
+      htmlCache = generateReportHTML(report);
+    }
+    if (!(await ensureValidPdf(finalPath, canRegen, canRegen ? htmlCache : null))) {
+      return res.status(500).json({ success: false, error: { code: 'INVALID_PDF', message: 'PDF dosyası geçersiz veya bozuk görünüyor' } });
+    }
+
+    const suffix = deliveredSigned ? '_signed' : '';
+    const rawFilename = `${report.equipment_name}_${report.work_order_number}_${report.inspection_date}${suffix}.pdf`;
+
+    const buildContentDisposition = (name) => {
+      const safeAscii = String(name)
+        .replace(/[\r\n]/g, ' ')
+        .replace(/["]+/g, '')
+        .replace(/[^A-Za-z0-9._-]+/g, '_')
+        .slice(0, 150) || 'rapor.pdf';
+      const encoded = encodeURIComponent(String(name));
+      return `attachment; filename="${safeAscii}"; filename*=UTF-8''${encoded}`;
+    };
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', buildContentDisposition(rawFilename));
+    return res.sendFile(path.resolve(finalPath));
+  } catch (error) {
+    console.error('Download public report error:', error);
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_SERVER_ERROR', message: 'Rapor indirilirken bir hata oluştu' } });
+  }
+};
+
 const getSigningData = async (req, res) => {
   try {
     const { id } = req.params;
     const companyId = req.user.company_id;
 
     const result = await pool.query(
-      `SELECT r.id, r.unsigned_pdf_path, i.status as inspection_status, wo.company_id
+      `SELECT r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
+              i.status as inspection_status,
+              e.name as equipment_name, e.type as equipment_type, e.template,
+              t.name as technician_name, t.surname as technician_surname,
+              wo.work_order_number, wo.company_id,
+              cc.name as customer_name,
+              comp.name as company_name, comp.logo_url
        FROM reports r
        JOIN inspections i ON r.inspection_id = i.id
+       JOIN equipment e ON i.equipment_id = e.id
+       JOIN technicians t ON i.technician_id = t.id
        JOIN work_orders wo ON i.work_order_id = wo.id
+       JOIN customer_companies cc ON wo.customer_company_id = cc.id
+       JOIN companies comp ON wo.company_id = comp.id
        WHERE r.id = $1`,
       [id]
     );
@@ -447,6 +730,7 @@ const getSigningData = async (req, res) => {
     }
 
     const report = result.rows[0];
+    await attachReportQrCode(report);
     if (report.company_id !== companyId) {
       return res.status(403).json({ success: false, error: { code: 'PERMISSION_DENIED', message: 'Bu rapora erişim yetkiniz yok' } });
     }
@@ -454,43 +738,12 @@ const getSigningData = async (req, res) => {
       return res.status(409).json({ success: false, error: { code: 'CONFLICT', message: 'Sadece tamamlanmış muayenelerin raporları imzalanabilir' } });
     }
 
-    let b64 = null;
-    if (report.unsigned_pdf_path) {
-      if (await fileExists(report.unsigned_pdf_path)) {
-        b64 = await readFileBase64(report.unsigned_pdf_path);
-      } else {
-        // Path var ama dosya yoksa yeniden üret
-        const full = await pool.query(
-          `SELECT r.*, i.inspection_data, i.inspection_date, i.start_time, i.end_time, i.photo_urls,
-                  e.name as equipment_name, e.type as equipment_type, e.template,
-                  t.name as technician_name, t.surname as technician_surname,
-                  wo.work_order_number, cc.name as customer_name,
-                  comp.name as company_name, comp.logo_url
-           FROM reports r
-           JOIN inspections i ON r.inspection_id = i.id
-           JOIN equipment e ON i.equipment_id = e.id
-           JOIN technicians t ON i.technician_id = t.id
-           JOIN work_orders wo ON i.work_order_id = wo.id
-           JOIN customer_companies cc ON wo.customer_company_id = cc.id
-           JOIN companies comp ON wo.company_id = comp.id
-           WHERE r.id = $1`,
-          [id]
-        );
-        if (full.rows.length) {
-          const html = generateReportHTML(full.rows[0]);
-          const buf = await generatePDFBufferFromHTML(html);
-          const out = unsignedPdfPath(id);
-          await writeFileAtomic(out, buf);
-          await pool.query('UPDATE reports SET unsigned_pdf_path = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [out, id]);
-          b64 = buf.toString('base64');
-        }
-      }
-    }
-    // Legacy base64 kaldırıldı; base64 fallback yok
-    if (!b64) {
+    const { path: pdfPath } = await resolvePdfPath(report, false);
+    if (!pdfPath || !(await fileExists(pdfPath))) {
       return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'İmzalanacak PDF bulunamadı' } });
     }
 
+    const b64 = await readFileBase64(pdfPath);
     return res.json({ success: true, data: { pdfBase64: b64 } });
   } catch (error) {
     console.error('Get signing data error:', error);
@@ -536,6 +789,7 @@ const prepareReportPdf = async (req, res) => {
     }
 
     const report = result.rows[0];
+    await attachReportQrCode(report);
     const html = generateReportHTML(report);
     const buf = await generatePDFBufferFromHTML(html);
     const out = unsignedPdfPath(id);
@@ -617,15 +871,18 @@ const signReportValidation = [
 module.exports = {
   getReport,
   downloadReport,
+  downloadPublicReport,
   signReport,
   sendReport,
   getPublicReport,
   getSigningData,
-   prepareReportPdf,
+  updateReportStyle,
+  prepareReportPdf,
   enqueueReportPrepare,
   getReportJobStatus,
   signReportValidation,
   // Export helpers for internal reuse
   generateReportHTML,
-  generatePDFFromHTML
+  generatePDFFromHTML,
+  attachReportQrCode
 };

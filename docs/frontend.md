@@ -37,7 +37,7 @@ frontend/
 ```
 
 ## 3. Rotalar ve Guard Yapısı
-- Public: `/login`
+- Public: `/login`, `/reports/public/:token`
 - Protected: `/dashboard` ve tüm modüller
 - PermissionRoute: rota düzeyinde izin kontrolü
 - PermissionGuard: buton/aksiyon görünürlüğü için
@@ -53,7 +53,7 @@ frontend/
   - detail: özet + sekmelere geçiş
   - form: dinamik renderer (typed + legacy), TableFieldEditor, saat/tarih alanları, local validasyon, PUT + save/complete
   - photos: alan bazlı upload, foto önizleme/silme, path normalize
-  - report: prepare/prepare-async (job polling), download, signer ile imzalama
+  - report: inline PDF önizleme (imzalı → imzasız fallback), prepare/prepare-async (job polling), ölçek seçimi, tek tuş indir, signer ile imzalama
 
 ## 5. Dinamik Form Renderer (InspectionFormPage)
 - key_value → items[name,valueType] → Text/Number/Date/Select
@@ -102,5 +102,5 @@ frontend/
 
 ## 11. Genişletme Önerileri
 - Equipment için görsel Template Editor (section/field sürükle-bırak)
-- Rapor viewer (PDF.js) ve inline imzalı/imsız önizleme
+- Public rapor sayfasına QR kod tarayıcı / rapor doğrulama flow’u
 - E2E (Playwright/Cypress) kritik akışlar

@@ -77,9 +77,11 @@ Saat formatı: `HH:MM` (UI `HH:MM:SS` gelirse `HH:MM`’e normalize edin).
 - `POST /reports/:id/sign` (signReports) — `{ pin, signedPdfBase64 }`
 - `GET /reports/:id/download?signed=true|false` (downloadReports) → PDF
   - İçerik: `Content-Type: application/pdf`
+  - İmzalı tercih: `signed=true` gönderildiğinde imzalı PDF varsa öncelikli olarak servis edilir; yoksa otomatik olarak imzasız PDF’e düşer (gerekirse yeniden üretilir).
   - Güvenli dosya adı: `Content-Disposition` RFC 5987 uyumlu — ASCII fallback `filename`, UTF‑8 için `filename*`.
-  - PDF doğrulama: İndirme öncesi dosya `%PDF-` ile başlamıyorsa base64→binary düzeltmesi ve gerekirse unsigned için yeniden üretim yapılır. Base64 onarımı yalnızca dosya boyutu eşik altında ise denenir (env: `PDF_BASE64_REPAIR_MAX_BYTES`, varsayılan 30MB).
-- Public: `GET /reports/public/:qrToken` — imzalı rapor gerektirir
+  - PDF doğrulama: İndirme öncesi dosya `%PDF-` ile başlamıyorsa base64→binary düzeltmesi ve gerekirse imzasız rapor için yeniden üretim yapılır. Base64 onarımı yalnızca dosya boyutu eşik altında ise denenir (env: `PDF_BASE64_REPAIR_MAX_BYTES`, varsayılan 30MB).
+- Public: `GET /reports/public/:qrToken` — rapor metadatası (imzalı/imsız)
+- Public: `GET /reports/public/:qrToken/download?signed=true|false` — PDF indirme (imzalı yoksa otomatik imzasız)
 
 ## 10. Uploads
 - `POST /uploads/company-logo` (companyAdmin) — field: `logo`

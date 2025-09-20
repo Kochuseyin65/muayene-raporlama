@@ -49,9 +49,10 @@ Bu belge, Muayene ve Raporlama Sistemi’nin ne olduğunu, hedeflerini, kullanı
 ## 5. Senaryolar (Happy Path)
 
 ### Senaryo A: Teklif → İş Emri → Muayene → Rapor → İmza
-- Offer oluştur → approve → send → customer accept → convert‑to‑work‑order
+- Offer oluştur → approve → send → customer accept → convert-to-work-order
 - WO atama ve planlama → muayeneler otomatik oluşur
 - Inspection form doldur, foto yükle → save → complete → prepare → sign → download
+- İmzalı rapor üretildikten sonra PDF alt bilgisindeki QR kodu, public doğrulama sayfasına yönlendirir (`/reports/public/:token`). İmzalı dosya yoksa public indirme otomatik olarak imzasız versiyonu sunar.
 
 ### Senaryo B: Direkt İş Emri + Muayene
 - WO create (müşteri + ekipmanlar) → assign teknisyen → inspections oluşur

@@ -1,153 +1,137 @@
 {
+  "settings": {
+    "reportStyle": {
+      "scale": "medium"
+    }
+  },
   "sections": [
     {
       "type": "key_value",
+      "title": "1. GENEL BİLGİLER",
+      "columns": 3,
       "items": [
-        {
-          "name": "imalatci",
-          "label": "İmalatçı",
-          "valueType": "text"
-        },
-        {
-          "name": "model",
-          "label": "Model",
-          "valueType": "text"
-        },
-        {
-          "name": "seri_no",
-          "label": "Seri No",
-          "valueType": "text"
-        },
-        {
-          "name": "uretim_tarihi",
-          "label": "Üretim Tarihi",
-          "valueType": "date"
-        },
-        {
-          "name": "calisma_ortami",
-          "label": "Çalışma Ortamı",
-          "options": [
-            {
-              "label": "İç Mekan",
-              "value": "ic"
-            },
-            {
-              "label": "Dış Mekan",
-              "value": "dis"
-            }
-          ],
-          "valueType": "select"
-        },
-        {
-          "name": "azami_kapasite_ton",
-          "label": "Azami Kapasite (ton)",
-          "valueType": "number"
-        }
-      ],
-      "title": "Genel Bilgiler"
-    },
-    {
-      "type": "checklist",
-      "title": "Güvenlik Kontrolleri",
-      "questions": [
-        {
-          "name": "emniyet_switch",
-          "label": "Emniyet Switch",
-          "options": [
-            "Uygun",
-            "Uygun Değil",
-            "N/A"
-          ]
-        },
-        {
-          "name": "limit_switch",
-          "label": "Limit Switch",
-          "options": [
-            "Uygun",
-            "Uygun Değil",
-            "N/A"
-          ]
-        },
-        {
-          "name": "halat_durumu",
-          "label": "Halat Durumu",
-          "options": [
-            "Uygun",
-            "Uygun Değil",
-            "N/A"
-          ]
-        },
-        {
-          "name": "kanca_durumu",
-          "label": "Kanca Durumu",
-          "options": [
-            "Uygun",
-            "Uygun Değil",
-            "N/A"
-          ]
-        }
+        { "name": "isyerinin_unvani", "label": "İşyerinin Ünvanı" },
+        { "name": "isyerinin_adresi", "label": "İşyerinin Adresi" },
+        { "name": "sgk_sicil_no", "label": "SGK Sicil Numarası" },
+        { "name": "periyodik_baslangic", "label": "Periyodik kontrol başlangıç tarihi ve saati" },
+        { "name": "periyodik_bitis", "label": "Periyodik kontrol bitiş tarihi ve saati" },
+        { "name": "sonraki_periyodik_baslangic", "label": "Bir sonraki periyodik kontrol başlangıç tarihi" },
+        { "name": "rapor_tarihi", "label": "Rapor Tarihi" },
+        { "name": "isg_katip_id", "label": "İSG-KATİP Sözleşme ID" },
+        { "name": "periyodik_kontrol_metodu", "label": "1.1 Periyodik Kontrol Metodu", "colspan": 3 }
       ]
     },
     {
       "type": "key_value",
+      "title": "2. EKİPMAN BİLGİLERİ",
+      "columns": 3,
       "items": [
-        {
-          "name": "maksimum_yukseklik_m",
-          "label": "Maksimum Yükseklik (m)",
-          "valueType": "number"
-        },
-        {
-          "name": "bom_uzunlugu_m",
-          "label": "Bom Uzunluğu (m)",
-          "valueType": "number"
-        },
-        {
-          "name": "kullanim_amaci",
-          "label": "Kullanım Amacı",
-          "valueType": "text"
-        },
-        {
-          "name": "son_bakim_tarihi",
-          "label": "Son Bakım Tarihi",
-          "valueType": "date"
-        }
-      ],
-      "title": "Teknik Değerler"
+        { "name": "ekipman_tipi", "label": "Ekipman tipi" },
+        { "name": "kurulum_tipi", "label": "Sabit kurulu / Kendinden kurulan" },
+        { "name": "vinc_turu", "label": "Vinç türü" },
+        { "name": "marka_model", "label": "Markası / Modeli" },
+        { "name": "imal_yili", "label": "İmal yılı" },
+        { "name": "kaldirma_kapasitesi", "label": "Kaldırma kapasitesi", "unit": "kg" },
+        { "name": "seri_no", "label": "Seri no" },
+        { "name": "rapor_no", "label": "Rapor no" },
+        { "name": "vinc_durumu", "label": "Vinç durumu" }
+      ]
+    },
+    {
+      "type": "key_value",
+      "title": "2.2. TESPİT EDİLEN BİLGİLER",
+      "columns": 4,
+      "items": [
+        { "name": "kaldirma_yuksekligi", "label": "Kaldırma yüksekliği", "unit": "m" },
+        { "name": "kanca_tipi", "label": "Kanca tipi" },
+        { "name": "halat_cap", "label": "Halat çapı", "unit": "mm" },
+        { "name": "halat_donanimi", "label": "Halat donanımı" },
+        { "name": "bom_yukseligi", "label": "Bom (yük) uzunluğu", "unit": "m" },
+        { "name": "kanca_agzi_aciklik", "label": "Kanca ağzı açıklığı", "unit": "%" },
+        { "name": "halat_govde_kesit", "label": "Halat gövde kesiti", "unit": "mm" },
+        { "name": "halat_teli_kirik", "label": "Halat tel kırıklığı", "unit": "6d/30d" },
+        { "name": "mast_genisligi", "label": "Mast genişliği", "unit": "m" },
+        { "name": "kanca_agzi_kalici", "label": "Kanca ağzı kalıcı açıklık", "unit": "%" },
+        { "name": "halat_govde_kesiti_kalici", "label": "Halat gövde kesiti kalıcı daralma", "unit": "%" },
+        { "name": "halat_deformasyon_puani", "label": "Halat deformasyon puanı" },
+        { "name": "mast_yuksekligi", "label": "Mast yüksekliği", "unit": "m" },
+        { "name": "kanca_govde_kesiti", "label": "Kanca gövde kesiti", "unit": "mm" },
+        { "name": "halat_teli_kalici", "label": "Halat teli kalıcı daralma", "unit": "%" },
+        { "name": "kullanim_amaci", "label": "Kullanım yeri ve amacı" }
+      ]
+    },
+    {
+      "type": "key_value",
+      "title": "3. TEST DEĞERLERİ",
+      "columns": 3,
+      "items": [
+        { "name": "dinamik_test_yuku", "label": "Dinamik test yükü", "unit": "kg" },
+        { "name": "statik_test_yuku", "label": "Statik test yükü", "unit": "kg" },
+        { "name": "yuklu_test_yuku", "label": "Yüklü test yükü", "unit": "kg" },
+        { "name": "test_aninda_radyus", "label": "Test anında radyus", "unit": "m" },
+        { "name": "test_aninda_bom_uzunlugu", "label": "Test anında bom uzunluğu", "unit": "m", "colspan": 2 }
+      ]
+    },
+    {
+      "type": "key_value",
+      "title": "4. ÖLÇÜM ALETLERİ BİLGİLERİ",
+      "columns": 2,
+      "items": [
+        { "name": "olcum_aleti_bilgisi", "label": "Adı, Seri no, Kalibrasyon bilgisi", "colspan": 2 }
+      ]
     },
     {
       "type": "table",
-      "field": "bakim_kayitlari",
-      "title": "Bakım / Servis Kayıtları",
+      "title": "5. MUAYENE KRİTERLERİ VE TESTLER",
+      "field": "muayene_kriterleri",
       "columns": [
-        {
-          "name": "tarih",
-          "label": "Tarih"
-        },
-        {
-          "name": "islem",
-          "label": "İşlem"
-        },
-        {
-          "name": "teknisyen",
-          "label": "Teknisyen"
-        },
-        {
-          "name": "not",
-          "label": "Not"
-        }
+        { "name": "kriter_sol", "label": "Muayene Kriteri" },
+        { "name": "degerlendirme_sol", "label": "Değerlendirme" },
+        { "name": "kriter_sag", "label": "Muayene Kriteri" },
+        { "name": "degerlendirme_sag", "label": "Değerlendirme" }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "5.1 TESTLER",
+      "field": "muayene_testleri",
+      "columns": [
+        { "name": "test_adi", "label": "Testler" },
+        { "name": "test_tarihi", "label": "Test Tarihi" },
+        { "name": "degerlendirme", "label": "Değerlendirme" }
+      ]
+    },
+    {
+      "type": "notes",
+      "title": "6. KUSUR AÇIKLAMALARI",
+      "field": "kusur_aciklamalari"
+    },
+    {
+      "type": "notes",
+      "title": "7. NOTLAR",
+      "field": "notlar"
+    },
+    {
+      "type": "notes",
+      "title": "8. SONUÇ VE KANAAT",
+      "field": "sonuc_ve_kanaat"
+    },
+    {
+      "type": "key_value",
+      "title": "9. PERİYODİK KONTROLLERİ YAPMAYA YETKİLİ KİŞİ BİLGİLERİ VE ONAY",
+      "columns": 3,
+      "items": [
+        { "name": "yetkili_ad_soyad", "label": "Adı Soyadı" },
+        { "name": "yetkili_unvan", "label": "Ünvanı" },
+        { "name": "yetkili_imza", "label": "İmzası" }
       ]
     },
     {
       "type": "photos",
-      "field": "genel_gorunum",
-      "title": "Fotoğraflar",
+      "title": "10. FOTOĞRAFLAR",
+      "field": "genel_fotograflar",
       "display": "grid",
       "maxCount": 12
-    },
-    {
-      "type": "notes",
-      "field": "ek_notlar",
-      "title": "Ek Notlar"
     }
   ]
 }

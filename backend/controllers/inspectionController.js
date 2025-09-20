@@ -21,7 +21,7 @@ const getInspections = async (req, res) => {
       SELECT i.*, e.name as equipment_name, e.type as equipment_type,
              t.name as technician_name, t.surname as technician_surname,
              wo.work_order_number, cc.name as customer_name,
-             r.id as report_id, r.is_signed, r.qr_token
+             r.id as report_id, r.is_signed, r.qr_token, r.report_style
       FROM inspections i
       JOIN equipment e ON i.equipment_id = e.id
       JOIN technicians t ON i.technician_id = t.id
@@ -184,7 +184,7 @@ const getInspection = async (req, res) => {
               wo.work_order_number, wo.scheduled_date as work_order_scheduled_date,
               cc.name as customer_name, cc.email as customer_email,
               r.id as report_id, r.unsigned_pdf_path, r.signed_pdf_path, 
-              r.is_signed, r.signed_at, r.qr_token
+              r.is_signed, r.signed_at, r.qr_token, r.report_style
        FROM inspections i
        JOIN equipment e ON i.equipment_id = e.id
        JOIN technicians t ON i.technician_id = t.id
@@ -390,6 +390,15 @@ const saveInspection = async (req, res) => {
     
     // Generate QR token
     const qrToken = require('crypto').randomBytes(16).toString('hex');
+
+    const templateReportStyle = inspection?.template?.settings?.reportStyle;
+    const templateScale = typeof templateReportStyle?.scale === 'string'
+      ? templateReportStyle.scale
+      : 'medium';
+    const defaultReportStyle = {
+      ...(templateReportStyle && typeof templateReportStyle === 'object' ? templateReportStyle : {}),
+      scale: templateScale
+    };
     
     // Check if report already exists
     const existingReport = await pool.query(
@@ -408,18 +417,22 @@ const saveInspection = async (req, res) => {
              is_signed = false,
              signed_at = NULL,
              signed_by = NULL,
+             report_style = CASE
+               WHEN report_style IS NULL OR report_style = '{}'::jsonb THEN $3::jsonb
+               ELSE report_style
+             END,
              updated_at = CURRENT_TIMESTAMP
          WHERE inspection_id = $2
          RETURNING *`,
-        [qrToken, id]
+        [qrToken, id, JSON.stringify(defaultReportStyle)]
       );
     } else {
       // Create new report
       reportResult = await pool.query(
-        `INSERT INTO reports (inspection_id, qr_token) 
-         VALUES ($1, $2) 
+        `INSERT INTO reports (inspection_id, qr_token, report_style) 
+         VALUES ($1, $2, $3::jsonb) 
          RETURNING *`,
-        [id, qrToken]
+        [id, qrToken, JSON.stringify(defaultReportStyle)]
       );
     }
     

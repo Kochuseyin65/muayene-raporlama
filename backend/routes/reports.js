@@ -4,9 +4,21 @@ const reportController = require('../controllers/reportController');
 const authMiddleware = require('../middleware/auth');
 const { requirePermission } = require('../middleware/permissions');
 
+// GET /api/reports/public/:qrToken/download - Public PDF download (with fallback if unsigned)
+router.get('/public/:qrToken/download',
+  reportController.downloadPublicReport
+);
+
 // GET /api/reports/public/:qrToken - Public report view (QR Code)
 router.get('/public/:qrToken', 
   reportController.getPublicReport
+);
+
+// PATCH /api/reports/:id/style - Update report style
+router.patch('/:id/style',
+  authMiddleware,
+  requirePermission('viewReports'),
+  reportController.updateReportStyle
 );
 
 // GET /api/reports/:id - Get report by ID

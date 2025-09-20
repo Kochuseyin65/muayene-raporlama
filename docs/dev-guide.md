@@ -21,7 +21,7 @@ npm run dev
 ```
 
 ## 3. Ortam Değişkenleri
-- Backend `.env`: PORT, DB_*, JWT_SECRET, REPORTS_PATH, PUPPETEER_*
+- Backend `.env`: PORT, DB_*, JWT_SECRET, REPORTS_PATH, PUPPETEER_*, REPORT_PUBLIC_BASE_URL (public rapor linki için taban URL)
 - Frontend `.env`: `VITE_API_BASE_URL=http://localhost:3000/api`
 
 ## 4. Test ve Doğrulama
