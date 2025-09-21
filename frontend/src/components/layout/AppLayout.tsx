@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react'
-import { AppBar, Box, Button, CssBaseline, IconButton, Toolbar, Typography, Stack, Container, useMediaQuery } from '@mui/material'
+import { AppBar, Avatar, Box, CssBaseline, IconButton, Toolbar, Typography, Stack, Container, useMediaQuery } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
@@ -14,6 +14,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
   const dispatch = useDispatch()
   const themeMode = useSelector((s: RootState) => s.ui.theme)
   const isDesktop = useMediaQuery('(min-width:900px)')
+  const user = useSelector((s: RootState) => s.auth.user)
 
   const { data: companyRes } = useGetMyCompanyProfileQuery(undefined, { skip: !useSelector((s: RootState) => s.auth.isAuthenticated) })
   const company = companyRes?.data
@@ -38,11 +39,23 @@ export default function AppLayout({ children }: PropsWithChildren) {
           }}>
             <MenuIcon />
           </IconButton>
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexGrow: 1, ml: 1 }}>
-            {logoSrc && <Box component="img" src={logoSrc} alt="Logo" sx={{ width: 28, height: 28, borderRadius: '6px' }} />}
-            <Typography variant="h6" component="div" sx={{ fontWeight: 700 }}>
-              {company?.name || 'Muayene Sistemi'}
-            </Typography>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1, ml: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              {logoSrc && <Box component="img" src={logoSrc} alt="Logo" sx={{ width: 28, height: 28, borderRadius: '6px' }} />}
+              <Typography variant="h6" component="div" sx={{ fontWeight: 700 }}>
+                {company?.name || 'Muayene Sistemi'}
+              </Typography>
+            </Stack>
+            <Box sx={{ flexGrow: 1 }} />
+            {user && (
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Avatar sx={{ width: 32, height: 32 }}>{(user.name || user.email || '?').slice(0, 1).toUpperCase()}</Avatar>
+                <Stack spacing={0}>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.name || user.email}</Typography>
+                  <Typography variant="caption" color="text.secondary">Teknisyen</Typography>
+                </Stack>
+              </Stack>
+            )}
           </Stack>
           <IconButton color="inherit" onClick={() => dispatch(toggleTheme())}>
             {themeMode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
