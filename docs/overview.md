@@ -11,7 +11,7 @@ Bu belge, Muayene ve Raporlama Sistemi’nin ne olduğunu, hedeflerini, kullanı
 - Super Admin: Tüm firmaları ve sistem ayarlarını yönetir. (Tüm izinler bypass)
 - Company Admin: Kendi firması kapsamında tam yetki (izin matrisine bağlı kısıtlı istisnalar olabilir).
 - Technician: Atandığı işlerde muayene yapar, form doldurur, foto yükler; yetkisine göre kaydet/tamamla.
-  - “Benim İş Emirlerim” ve “Benim Muayenelerim” ekranları üzerinden yalnızca kendisine atanmış kayıtları takip eder.
+  - “Benim İş Emirlerim” (`viewMyWorkOrders`) ve “Benim Muayenelerim” (`viewMyInspections`) ekranları üzerinden yalnızca kendisine atanmış kayıtları takip eder.
 - Müşteri (Public): Teklif takibi ve imzalı rapor public görüntüleme.
 
 İzin matrisinin tamamı için bkz. security.md ve api.md — uç başlıklarında “Permission”.

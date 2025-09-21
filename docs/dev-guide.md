@@ -34,6 +34,7 @@ npm run dev
 - Hata mesajlarında backend `error.message`’ı aynen iletin (kullanıcıya net sebep).
 - Saat alanlarında `HH:MM` formatına normalize edin.
 - superAdmin bypass ve PermissionRoute profil-hydrate bekleme özelliğini bozmayın.
+- Teknisyen rolleri için standart izin setini oluştururken `viewMyWorkOrders` ve `viewMyInspections` değerlerini ekleyin; bu sayede “Benim İş Emirlerim / Muayenelerim” menüleri aktif olur.
 
 ## 6. Tipik İş Akışları (Geliştirici)
 - Örnek ekipman ve template: `python scripts/create_example_equipment.py`

@@ -45,6 +45,7 @@ frontend/
 
 ## 4. Modül Özeti
 - Customers, Equipment, Technicians: CRUD listeleri, arama/sayfalama, dialog formlar, izinli aksiyonlar
+  - Technicians izin dialogunda `viewMyWorkOrders`, `viewMyInspections` gibi teknisyen-odaklı izinler atanarak menüde “Benim …” sayfaları aktif edilir.
 - Equipment: görsel Template Builder ile şablon düzenleme (JSON’suz)
 - Offers: liste/detay, approve/send/convert, durum rozetleri
 - Work Orders: liste/detay, assign/status, inspections özetleri
