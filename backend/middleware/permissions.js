@@ -28,13 +28,15 @@ const PERMISSIONS = {
   
   // Work Order Management
   "viewWorkOrders": "İş emirlerini görüntüle",
+  "viewMyWorkOrders": "Benim iş emirlerimi görüntüle",
   "createWorkOrder": "İş emri oluştur",
   "editWorkOrder": "İş emri düzenle",
   "assignWorkOrder": "İş emri ata",
   "updateWorkOrderStatus": "İş emri durumu güncelle",
-  
+
   // Inspection Management
   "viewInspections": "Muayeneleri görüntüle",
+  "viewMyInspections": "Benim muayenelerimi görüntüle",
   "editInspection": "Muayene düzenle",
   "saveInspection": "Muayene kaydet",
   "completeInspection": "Muayene tamamla",

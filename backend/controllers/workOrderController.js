@@ -16,10 +16,20 @@ const generateInspectionNumber = () => {
 const getWorkOrders = async (req, res) => {
   try {
     const companyId = req.user.company_id;
-    const { page = 1, limit = 20, status, assignedTo, search, customerCompanyId } = req.query;
-    
+    const { page = 1, limit = 20, status, assignedTo, search, customerCompanyId, mine } = req.query;
+
     const offset = (page - 1) * limit;
-    
+
+    const normalizeId = (value) => {
+      if (value === null || value === undefined || value === '') return null;
+      const num = Number(value);
+      return Number.isNaN(num) ? null : num;
+    };
+
+    const mineSelected = typeof mine === 'string' && ['true', '1', 'yes'].includes(mine.toLowerCase());
+    const hasFullPermission = (req.user.permissions || []).includes('viewWorkOrders');
+    const technicianFilterId = mineSelected || !hasFullPermission ? req.user.id : normalizeId(assignedTo);
+
     let query = `
       SELECT wo.*, cc.name as customer_name, cc.email as customer_email,
              t.name as created_by_name, t.surname as created_by_surname,
@@ -50,14 +60,14 @@ const getWorkOrders = async (req, res) => {
       params.push(customerCompanyId);
     }
     
-    if (assignedTo) {
+    if (technicianFilterId) {
       query += ` AND EXISTS (
         SELECT 1 FROM work_order_assignments woa 
         WHERE woa.work_order_id = wo.id AND woa.technician_id = $${params.length + 1}
       )`;
-      params.push(assignedTo);
+      params.push(technicianFilterId);
     }
-    
+
     query += ` GROUP BY wo.id, cc.name, cc.email, t.name, t.surname, o.offer_number`;
     query += ` ORDER BY wo.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
@@ -100,12 +110,12 @@ const getWorkOrders = async (req, res) => {
       countParams.push(customerCompanyId);
     }
     
-    if (assignedTo) {
+    if (technicianFilterId) {
       countQuery += ` AND EXISTS (
         SELECT 1 FROM work_order_assignments woa 
         WHERE woa.work_order_id = wo.id AND woa.technician_id = $${countParams.length + 1}
       )`;
-      countParams.push(assignedTo);
+      countParams.push(technicianFilterId);
     }
     
     const countResult = await pool.query(countQuery, countParams);

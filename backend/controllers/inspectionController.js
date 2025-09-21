@@ -12,11 +12,22 @@ const getInspections = async (req, res) => {
       status, 
       dateFrom, 
       dateTo,
-      equipmentType 
+      equipmentType,
+      mine
     } = req.query;
-    
+
     const offset = (page - 1) * limit;
-    
+
+    const normalizeId = (value) => {
+      if (value === null || value === undefined || value === '') return null;
+      const num = Number(value);
+      return Number.isNaN(num) ? null : num;
+    };
+
+    const mineSelected = typeof mine === 'string' && ['true', '1', 'yes'].includes(mine.toLowerCase());
+    const hasFullPermission = (req.user.permissions || []).includes('viewInspections');
+    const technicianFilterId = mineSelected || !hasFullPermission ? req.user.id : normalizeId(technicianId);
+
     let query = `
       SELECT i.*, e.name as equipment_name, e.type as equipment_type,
              t.name as technician_name, t.surname as technician_surname,
@@ -37,9 +48,9 @@ const getInspections = async (req, res) => {
       params.push(workOrderId);
     }
     
-    if (technicianId) {
+    if (technicianFilterId) {
       query += ` AND i.technician_id = $${params.length + 1}`;
-      params.push(technicianId);
+      params.push(technicianFilterId);
     }
     
     if (status) {
@@ -83,9 +94,9 @@ const getInspections = async (req, res) => {
       countParams.push(workOrderId);
     }
     
-    if (technicianId) {
+    if (technicianFilterId) {
       countQuery += ` AND i.technician_id = $${countParams.length + 1}`;
-      countParams.push(technicianId);
+      countParams.push(technicianFilterId);
     }
     
     if (status) {

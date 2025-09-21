@@ -48,12 +48,14 @@ frontend/
 - Equipment: görsel Template Builder ile şablon düzenleme (JSON’suz)
 - Offers: liste/detay, approve/send/convert, durum rozetleri
 - Work Orders: liste/detay, assign/status, inspections özetleri
+- MyWorkOrders: teknisyenlere özel filtrelenmiş liste (atandığım iş emirleri, inline filtre/yenile)
 - Inspections:
   - list: iş emri/müşteri/ekipman/teknisyen/tarih/status/rapor durumları
   - detail: özet + sekmelere geçiş
   - form: dinamik renderer (typed + legacy), TableFieldEditor, saat/tarih alanları, local validasyon, PUT + save/complete
   - photos: alan bazlı upload, foto önizleme/silme, path normalize
   - report: inline PDF önizleme (imzalı → imzasız fallback), prepare/prepare-async (job polling), ölçek seçimi, tek tuş indir, signer ile imzalama
+- MyInspections: teknisyene atanmış muayeneleri tarih/durum filtresiyle listeler
 
 ## 5. Dinamik Form Renderer (InspectionFormPage)
 - key_value → items[name,valueType] → Text/Number/Date/Select

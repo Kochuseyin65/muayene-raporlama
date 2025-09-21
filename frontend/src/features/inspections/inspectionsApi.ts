@@ -20,10 +20,23 @@ export interface Inspection {
   qr_token?: string
 }
 
+const buildParams = (params: Record<string, any>) => {
+  const result: Record<string, any> = {}
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return
+    if (key === 'mine' && value) {
+      result[key] = 'true'
+    } else {
+      result[key] = value
+    }
+  })
+  return result
+}
+
 export const inspectionsApi = baseApi.injectEndpoints({
   endpoints: (b) => ({
-    listInspections: b.query<{ success: boolean; data: { inspections: Inspection[]; pagination: any } }, { page: number; limit: number; workOrderId?: number; technicianId?: number; status?: string; dateFrom?: string; dateTo?: string; equipmentType?: string }>({
-      query: (params) => ({ url: '/inspections', params }),
+    listInspections: b.query<{ success: boolean; data: { inspections: Inspection[]; pagination: any } }, { page: number; limit: number; workOrderId?: number; technicianId?: number; status?: string; dateFrom?: string; dateTo?: string; equipmentType?: string; mine?: boolean }>({
+      query: (params) => ({ url: '/inspections', params: buildParams(params) }),
       providesTags: [{ type: 'Inspections', id: 'LIST' }],
     }),
     getInspection: b.query<{ success: boolean; data: any }, number>({
@@ -34,3 +47,4 @@ export const inspectionsApi = baseApi.injectEndpoints({
 })
 
 export const { useListInspectionsQuery, useLazyListInspectionsQuery, useGetInspectionQuery } = inspectionsApi
+

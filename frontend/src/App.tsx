@@ -22,6 +22,8 @@ import InspectionDetailPage from '@/features/inspections/InspectionDetailPage'
 import InspectionFormPage from '@/features/inspections/InspectionFormPage'
 import InspectionPhotosPage from '@/features/inspections/InspectionPhotosPage'
 import InspectionReportPage from '@/features/inspections/InspectionReportPage'
+import MyWorkOrdersPage from '@/features/workOrders/MyWorkOrdersPage'
+import MyInspectionsPage from '@/features/inspections/MyInspectionsPage'
 import ReportPublicPage from '@/features/reports/ReportPublicPage'
 
 function ThemedApp() {
@@ -91,6 +93,14 @@ function ThemedApp() {
                 }
               />
               <Route
+                path="/my/work-orders"
+                element={
+                  <AppLayout>
+                    <MyWorkOrdersPage />
+                  </AppLayout>
+                }
+              />
+              <Route
                 path="/work-orders/:id"
                 element={
                   <AppLayout>
@@ -115,6 +125,14 @@ function ThemedApp() {
                 element={
                   <AppLayout>
                     <InspectionsPage />
+                  </AppLayout>
+                }
+              />
+              <Route
+                path="/my/inspections"
+                element={
+                  <AppLayout>
+                    <MyInspectionsPage />
                   </AppLayout>
                 }
               />

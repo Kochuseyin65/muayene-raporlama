@@ -8,7 +8,7 @@ const { uploadInspectionPhotos: uploadPhotosMulter, handleUploadError } = requir
 // GET /api/inspections - Get all inspections
 router.get('/', 
   authMiddleware, 
-  requirePermission('viewInspections'), 
+  requireAnyPermission(['viewInspections', 'viewMyInspections']), 
   inspectionController.getInspections
 );
 

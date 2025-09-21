@@ -48,7 +48,8 @@ Bu belge, backend API uçlarını, izinlerini, tipik istek/yanıt örneklerini v
 - Public: `GET /offers/track/:token`, `POST /offers/track/:token/accept|decline`
 
 ## 7. Work Orders
-- `GET /work-orders?status=&search=&assignedTo=&customerCompanyId=&page=&limit=` (viewWorkOrders)
+- `GET /work-orders?status=&search=&assignedTo=&customerCompanyId=&mine=&page=&limit=` (viewWorkOrders|viewMyWorkOrders)
+  - `mine=true` veya sadece `viewMyWorkOrders` iznine sahip kullanıcılar için sonuçlar otomatik olarak giriş yapan teknisyenle sınırlandırılır.
 - `GET /work-orders/:id` (viewWorkOrders)
 - `POST /work-orders` (createWorkOrder)
 - `PUT /work-orders/:id` (editWorkOrder)
@@ -57,7 +58,8 @@ Bu belge, backend API uçlarını, izinlerini, tipik istek/yanıt örneklerini v
 - `DELETE /work-orders/:id` (any(companyAdmin, editWorkOrder))
 
 ## 8. Inspections
-- `GET /inspections?workOrderId=&technicianId=&status=&dateFrom=&dateTo=&equipmentType=&page=&limit=` (viewInspections)
+- `GET /inspections?workOrderId=&technicianId=&status=&dateFrom=&dateTo=&equipmentType=&mine=&page=&limit=` (viewInspections|viewMyInspections)
+  - `mine=true` veya yalnızca `viewMyInspections` iznine sahip kullanıcılar için sadece oturumdaki teknisyene atanmış muayeneler dönülür.
 - `GET /inspections/:id` (viewInspections)
 - `POST /inspections` (createWorkOrder)
 - `PUT /inspections/:id` (editInspection) — `{ inspectionData, inspectionDate, startTime, endTime }`

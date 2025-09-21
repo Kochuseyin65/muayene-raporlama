@@ -7,7 +7,7 @@ const { requirePermission, requireAnyPermission } = require('../middleware/permi
 // GET /api/work-orders - Get all work orders
 router.get('/', 
   authMiddleware, 
-  requirePermission('viewWorkOrders'), 
+  requireAnyPermission(['viewWorkOrders', 'viewMyWorkOrders']), 
   workOrderController.getWorkOrders
 );
 

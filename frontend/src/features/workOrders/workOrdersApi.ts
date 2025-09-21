@@ -16,10 +16,23 @@ export interface WorkOrder {
   created_at?: string
 }
 
+const buildParams = (params: Record<string, any>) => {
+  const result: Record<string, any> = {}
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return
+    if (key === 'mine' && value) {
+      result[key] = 'true'
+    } else {
+      result[key] = value
+    }
+  })
+  return result
+}
+
 export const workOrdersApi = baseApi.injectEndpoints({
   endpoints: (b) => ({
-    listWorkOrders: b.query<{ success: boolean; data: { workOrders: WorkOrder[]; pagination: any } }, { page: number; limit: number; status?: string; search?: string; customerCompanyId?: number; assignedTo?: number }>({
-      query: (params) => ({ url: '/work-orders', params }),
+    listWorkOrders: b.query<{ success: boolean; data: { workOrders: WorkOrder[]; pagination: any } }, { page: number; limit: number; status?: string; search?: string; customerCompanyId?: number; assignedTo?: number; mine?: boolean }>({
+      query: (params) => ({ url: '/work-orders', params: buildParams(params) }),
       providesTags: [{ type: 'WorkOrders', id: 'LIST' }],
     }),
     getWorkOrder: b.query<{ success: boolean; data: WorkOrder }, number>({

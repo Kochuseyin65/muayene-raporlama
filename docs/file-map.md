@@ -43,8 +43,8 @@ Bu belge, repodaki tüm dosya ve klasörlerin amacını ve bağlamını açıkla
   - `customers/`, `equipment/`, `technicians/` — CRUD sayfaları ve slice’ları
     - `equipment/TemplateBuilderDialog.tsx` — Ekipman şablonu için görsel düzenleyici
   - `offers/` — OffersPage, OfferDetailPage, offersApi
-  - `workOrders/` — WorkOrdersPage, WorkOrderDetailPage, workOrdersApi
-  - `inspections/` — InspectionsPage, InspectionDetailPage, InspectionForm/Photos/ReportPage, TableFieldEditor, inspectionsApi
+  - `workOrders/` — WorkOrdersPage, WorkOrderDetailPage, MyWorkOrdersPage, workOrdersApi
+  - `inspections/` — InspectionsPage, InspectionDetailPage, InspectionForm/Photos/ReportPage, MyInspectionsPage, TableFieldEditor, inspectionsApi
   - `reports/` — ReportPublicPage, paylaşılan PDF önizleme bileşenleri ve fetch yardımcıları
 - `src/constants/*` — nav (Sidebar menüsü), permissions listesi
 - `src/utils/*` — date (TR tarih), format (TL para)
