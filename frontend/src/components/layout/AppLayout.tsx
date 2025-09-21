@@ -1,22 +1,30 @@
-import type { PropsWithChildren } from 'react'
-import { AppBar, Avatar, Box, CssBaseline, IconButton, Toolbar, Typography, Stack, Container, useMediaQuery } from '@mui/material'
+import { useState, type PropsWithChildren, type MouseEvent } from 'react'
+import { AppBar, Avatar, Box, CssBaseline, IconButton, Toolbar, Typography, Stack, Container, useMediaQuery, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import Brightness4Icon from '@mui/icons-material/Brightness4'
 import Brightness7Icon from '@mui/icons-material/Brightness7'
+import SettingsIcon from '@mui/icons-material/Settings'
+import LogoutIcon from '@mui/icons-material/Logout'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleSidebar, toggleSidebarCollapsed, toggleTheme } from '@/store/slices/uiSlice'
 import type { RootState } from '@/store/store'
-import LogoutButton from '@/features/auth/LogoutButton'
+import { logout } from '@/store/slices/authSlice'
+import { useNavigate } from 'react-router-dom'
 import Sidebar, { SidebarPermanent, drawerWidth, drawerCollapsedWidth } from './Sidebar'
 import { useGetMyCompanyProfileQuery } from '@/features/companies/companiesApi'
 
 export default function AppLayout({ children }: PropsWithChildren) {
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const themeMode = useSelector((s: RootState) => s.ui.theme)
   const isDesktop = useMediaQuery('(min-width:900px)')
-  const user = useSelector((s: RootState) => s.auth.user)
+  const authState = useSelector((s: RootState) => s.auth)
+  const user = authState.user
+  const displayName = user ? [user.name, user.surname].filter(Boolean).join(' ').trim() || user.email || '' : ''
+  const avatarInitial = displayName ? displayName.charAt(0).toUpperCase() : '?'
+  const roleLabel = 'Teknisyen'
 
-  const { data: companyRes } = useGetMyCompanyProfileQuery(undefined, { skip: !useSelector((s: RootState) => s.auth.isAuthenticated) })
+  const { data: companyRes } = useGetMyCompanyProfileQuery(undefined, { skip: !authState.isAuthenticated })
   const company = companyRes?.data
 
   const logoSrc = (() => {
@@ -27,6 +35,26 @@ export default function AppLayout({ children }: PropsWithChildren) {
     if (url.startsWith('/uploads')) return `${import.meta.env.VITE_API_BASE_URL}${url}`
     return url
   })()
+
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null)
+  const menuOpen = Boolean(menuAnchor)
+
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
+    setMenuAnchor(event.currentTarget)
+  }
+
+  const handleMenuClose = () => setMenuAnchor(null)
+
+  const handleSettings = () => {
+    setMenuAnchor(null)
+    navigate('/settings')
+  }
+
+  const handleLogout = () => {
+    setMenuAnchor(null)
+    dispatch(logout())
+    navigate('/login', { replace: true })
+  }
 
   return (
       <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -49,10 +77,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <Box sx={{ flexGrow: 1 }} />
             {user && (
               <Stack direction="row" spacing={1.5} alignItems="center">
-                <Avatar sx={{ width: 32, height: 32 }}>{(user.name || user.email || '?').slice(0, 1).toUpperCase()}</Avatar>
+                <IconButton onClick={handleMenuOpen} size="small" sx={{ p: 0 }}>
+                  <Avatar sx={{ width: 40, height: 40 }}>{avatarInitial}</Avatar>
+                </IconButton>
                 <Stack spacing={0}>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.name || user.email}</Typography>
-                  <Typography variant="caption" color="text.secondary">Teknisyen</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>{displayName}</Typography>
+                  <Typography variant="caption" color="text.secondary">{roleLabel}</Typography>
                 </Stack>
               </Stack>
             )}
@@ -60,7 +90,22 @@ export default function AppLayout({ children }: PropsWithChildren) {
           <IconButton color="inherit" onClick={() => dispatch(toggleTheme())}>
             {themeMode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
           </IconButton>
-          <LogoutButton />
+          <Menu
+            anchorEl={menuAnchor}
+            open={menuOpen}
+            onClose={handleMenuClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            <MenuItem onClick={handleSettings}>
+              <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
+              <ListItemText primary="Ayarlar" />
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
+              <ListItemText primary="Çıkış" />
+            </MenuItem>
+          </Menu>
         </Toolbar>
         </AppBar>
 
